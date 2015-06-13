@@ -17,27 +17,26 @@ object HubActor {
 
 class HubActor(out: ActorRef)(implicit app: Application) extends Actor with ActorLogging {
   import HubActor._
+  implicit val actorContext = context
 
   // Save active actors for the current user
   val actors = collection.mutable.Map[String, ActorRef]()
+
   // Id generator
   val index = new java.util.concurrent.atomic.AtomicLong(1)
 
-  val widgets = Map(
-    "ping" -> PingActor.props _,
-    "codeship" -> CodeShipActor.props _,
-    "cloudwatch" -> CloudWatchActor.props _
-  )
-
   override def receive = {
+    // Forward a simple message to the user (notification, error...)
     case Forward(event, json) =>
-      log.info(s">> $json")
+      log.debug(s">> $json")
       out ! OutEvent(event, json)
 
+    // Send a metric update to the client
     case Update(name, json) =>
-      log.info(s">> $json")
+      log.debug(s">> $json")
       out ! OutEvent("update", Json.obj(name -> json))
 
+    // Request sent by the client
     case InEvent(action: String, data: JsValue) =>
       log.info(s"<< ($action) $data")
 
@@ -49,16 +48,15 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
           val id = index.getAndIncrement()
           val name = s"$widget:$id"
 
-          log.info(s"Start widget '$name'")
+          log.info(s"Starting widget '$name'")
 
-          widgets.get(widget) match {
-            case Some(props) =>
-              val actor = context.actorOf(props(self, name, config), name)
-              actors.put(name, actor)
-              self ! Forward("started", Json.obj("name" -> name))
-            case None =>
-              log.warning(s"Cannot start unknown widget $widget")
-          }
+          WidgetFactory.initialize(widget, self, name, config).fold(
+            error => {
+              self ! Forward("error", error)
+              log.warning(s"Cannot initialize new widget $widget: $error")
+            },
+            actor => addActor(name, actor)
+          )
 
         case "stop" =>
           data.asOpt[String].foreach { name =>
@@ -83,6 +81,11 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
     actor ! PoisonPill
     actors.remove(name)
     self ! Forward("stopped", Json.obj("name" -> name))
+  }
+
+  private def addActor(name: String, actor: ActorRef) = {
+    actors.put(name, actor)
+    self ! Forward("started", Json.obj("name" -> name))
   }
 
 }

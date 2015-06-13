@@ -20,6 +20,9 @@
 
   <!-- Set a specific actor to DEBUG -->
   <logger name="controllers" level="DEBUG" />
+  <logger name="actors" level="INFO" />
+  <logger name="actors.widgets" level="DEBUG" />
+
 
   <root level="ERROR">
     <appender-ref ref="STDOUT" />

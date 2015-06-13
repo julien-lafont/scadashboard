@@ -18,12 +18,12 @@ class PingActor(hub: ActorRef, name: String, config: JsValue)(implicit app: Appl
   import PingActor._
 
   val url = (config \ "url").as[String]
-  val delay = (config \ "delay").asOpt[Long].getOrElse(10l)
+  val interval = (config \ "interval").asOpt[Long].getOrElse(10l)
 
-  val query = WS.url(url).withRequestTimeout(delay * 1000l).withFollowRedirects(true)
+  val query = WS.url(url).withRequestTimeout(interval * 1000l).withFollowRedirects(true)
 
   import context.dispatcher
-  val tickTask = context.system.scheduler.schedule(0.seconds, delay.seconds, self, Tick)
+  val tickTask = context.system.scheduler.schedule(0.seconds, interval.seconds, self, Tick)
 
   override def postStop(): Unit = {
     tickTask.cancel()
