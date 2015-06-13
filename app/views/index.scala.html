@@ -1,0 +1,45 @@
+@()(implicit req: RequestHeader)
+
+@import helper._
+
+@main("Welcome to Play") {
+
+    <script type='text/javascript' src='@routes.Assets.versioned("javascripts/index.js")'></script>
+
+    <center>Ouvre ta console !</center>
+    <script language="javascript" type="text/javascript">
+        var wsUri = "ws://localhost:9000/ws";
+        var websocket = new WebSocket("@controllers.routes.DashboardController.ws().webSocketURL()");
+
+        websocket.onopen = onOpen;
+        websocket.onclose = onClose;
+        websocket.onmessage = onMessage;
+        websocket.onerror = onError;
+
+        function onOpen(e) {
+            console.info("Connected");
+            send({action: "start", widget: "ping", config: { url: "http://www.google.fr", delay: 1}});
+            send({"action": "start", "widget": "codeship", "config": {"apikey": "8393a4e5fa5e7bb0b14d516916993bae10b590e1e933f1e544a85a93602a", "projectId": "76102", "branch": "develop"}});
+            send({"action": "start", "widget": "cloudwatch", "config": {"delay": 60, "namespace": "AWS/EC2", "metric": "NetworkIn", "instanceId": "i-7fc786d5", "period": 60, "since": 1 }});
+        }
+
+        function onClose(e) {
+            console.info("Disconnected");
+        }
+
+        function onMessage(e) {
+            console.log("<< " + e.data);
+        }
+
+        function onError(e) {
+            console.error(e);
+        }
+
+        function send(obj) {
+            var json = JSON.stringify(obj);
+            websocket.send(json);
+            console.log(">> " + json);
+        }
+    </script>
+
+}
