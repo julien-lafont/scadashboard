@@ -4,10 +4,10 @@ import scala.concurrent.ExecutionContext
 import javax.inject._
 
 import play.api._
-import play.api.libs.json._
 import play.api.mvc._
 
 import actors.HubActor
+import models.Protocol
 
 class DashboardController @Inject() (
   implicit ec: ExecutionContext, app: Application) extends Controller {
@@ -16,7 +16,7 @@ class DashboardController @Inject() (
     Ok(views.html.index())
   }
 
-  def ws = WebSocket.acceptWithActor[JsValue, JsValue] { request => out =>
+  def ws = WebSocket.acceptWithActor[Protocol.InEvent, Protocol.OutEvent] { request => out =>
     HubActor.props(out)
   }
 }

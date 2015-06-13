@@ -1,22 +1,22 @@
 package actors.widgets
 
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
-import akka.actor.{ActorLogging, Actor, Props, ActorRef}
-import com.amazonaws.services.cloudwatch.model.{Statistic, Dimension, GetMetricStatisticsRequest}
+import play.api.libs.json.{JsValue, Json}
+import com.amazonaws.services.cloudwatch.model.{Dimension, GetMetricStatisticsRequest, Statistic}
 import org.joda.time.DateTime
-import play.api.libs.json.{Json, JsValue}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 
+import actors.HubActor.Update
 import utils.AWS
-import actors.HubActor.Forward
 
 object CloudWatchActor {
-  def props(out: ActorRef, config: JsValue) = Props(new CloudWatchActor(out, config))
+  def props(hub: ActorRef, name: String, config: JsValue) = Props(new CloudWatchActor(hub, name, config))
   private case object Tick
 }
 
-class CloudWatchActor(hub: ActorRef, config: JsValue) extends Actor with ActorLogging {
+class CloudWatchActor(hub: ActorRef, name: String, config: JsValue) extends Actor with ActorLogging {
   import CloudWatchActor._
 
   val delay = (config \ "delay").asOpt[Long].getOrElse(30l)
@@ -50,7 +50,7 @@ class CloudWatchActor(hub: ActorRef, config: JsValue) extends Actor with ActorLo
         val json = Json.toJson(result.getDatapoints.asScala.map { datapoint =>
           datapoint.getTimestamp.getTime.toString -> BigDecimal(datapoint.getAverage)
         }.toMap)
-        hub ! Forward(json)
+        hub ! Update(name, json)
       }.recover {
         case ex => log.error(ex, "Cannot retrieve cloudwatch metrics")
       }

@@ -5,11 +5,13 @@ import play.api.libs.json.{Json, JsObject, JsValue}
 
 import actors.widgets._
 import akka.actor._
+import models.Protocol.{OutEvent, InEvent}
 
 object HubActor {
   def props(out: ActorRef)(implicit app: Application) = Props(new HubActor(out))
 
-  case class Forward(json: JsValue)
+  case class Forward(event: String, data: JsValue)
+  case class Update(name: String, data: JsValue)
   case object Stop
 }
 
@@ -21,54 +23,66 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
   // Id generator
   val index = new java.util.concurrent.atomic.AtomicLong(1)
 
-  override def receive = {
-    case Forward(json) =>
-      log.info(s">> $json")
-      out ! json
+  val widgets = Map(
+    "ping" -> PingActor.props _,
+    "codeship" -> CodeShipActor.props _,
+    "cloudwatch" -> CloudWatchActor.props _
+  )
 
-    case json: JsValue =>
-      log.info(s"<< $json")
-      val action = (json \ "action").asOpt[String]
+  override def receive = {
+    case Forward(event, json) =>
+      log.info(s">> $json")
+      out ! OutEvent(event, json)
+
+    case Update(name, json) =>
+      log.info(s">> $json")
+      out ! OutEvent("update", Json.obj(name -> json))
+
+    case InEvent(action: String, data: JsValue) =>
+      log.info(s"<< ($action) $data")
 
       action match {
-        case Some("start") =>
-          val widget = (json \ "widget").as[String]
-          val config = (json \ "config").asOpt[JsObject].getOrElse(Json.obj())
+        case "start" =>
+          val widget = (data \ "widget").as[String]
+          val config = (data \ "config").asOpt[JsObject].getOrElse(Json.obj())
+
           val id = index.getAndIncrement()
           val name = s"$widget:$id"
+
           log.info(s"Start widget '$name'")
 
-          val actor = widget match {
-            case "ping" => context.actorOf(PingActor.props(self, config), name)
-            case "codeship" => context.actorOf(CodeShipActor.props(self, config), name)
-            case "cloudwatch" => context.actorOf(CloudWatchActor.props(self, config), name)
+          widgets.get(widget) match {
+            case Some(props) =>
+              val actor = context.actorOf(props(self, name, config), name)
+              actors.put(name, actor)
+              self ! Forward("started", Json.obj("name" -> name))
+            case None =>
+              log.warning(s"Cannot start unknown widget $widget")
           }
 
-          actors.put(name, actor)
-          self ! Forward(Json.obj("action" -> "started", "name" -> name))
-
-        case Some("stop") =>
-          val name = (json \ "name").as[String]
-          actors.get(name) match {
-            case Some(actor) =>
-              actor ! PoisonPill
-              actors.remove(name)
-              self ! Forward(Json.obj("action" -> "stopped", "name" -> name))
+        case "stop" =>
+          data.asOpt[String].foreach { name =>
+            actors.get(name).foreach(actor =>
+              stopActor(name, actor))
           }
 
-        case Some("stop-all") =>
+        case "stop-all" =>
           actors.foreach { case (name, actor) =>
-            actor ! PoisonPill
-            actors.remove(name)
-            self ! Forward(Json.obj("action" -> "stopped", "name" -> name))
+            stopActor(name, actor)
           }
 
-        case Some("status") =>
-          self ! Forward(Json.toJson(actors.keys))
+        case "status" =>
+          self ! Forward("status", Json.toJson(actors.keys))
 
         case other =>
           log.warning("Action not handled !")
       }
+  }
+
+  private def stopActor(name: String, actor: ActorRef) = {
+    actor ! PoisonPill
+    actors.remove(name)
+    self ! Forward("stopped", Json.obj("name" -> name))
   }
 
 }

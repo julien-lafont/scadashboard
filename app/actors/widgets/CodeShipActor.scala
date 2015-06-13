@@ -8,14 +8,14 @@ import play.api.Application
 import play.api.libs.json.JsValue
 import play.api.libs.ws.WS
 
-import actors.HubActor.Forward
+import actors.HubActor.Update
 
 object CodeShipActor {
-  def props(out: ActorRef, config: JsValue)(implicit app: Application) = Props(new CodeShipActor(out, config))
+  def props(hub: ActorRef, name: String, config: JsValue)(implicit app: Application) = Props(new CodeShipActor(hub, name, config))
   private case object Tick
 }
 
-class CodeShipActor(hub: ActorRef, config: JsValue)(implicit app: Application) extends Actor with ActorLogging {
+class CodeShipActor(hub: ActorRef, name: String, config: JsValue)(implicit app: Application) extends Actor with ActorLogging {
   import CodeShipActor._
 
   val apikey = (config \ "apikey").as[String]
@@ -37,7 +37,7 @@ class CodeShipActor(hub: ActorRef, config: JsValue)(implicit app: Application) e
   override def receive = {
     case Tick =>
       query.get().onComplete {
-        case Success(response) => hub ! Forward(response.json)
+        case Success(response) => hub ! Update(name, response.json)
         case Failure(ex) => log.error(ex, "Cannot retrieve Codeship project status")
       }
 
