@@ -68,7 +68,6 @@ class GitHubIssuesActor(hub: ActorRef, name: String, config: GitHubIssuesConfig)
    */
   private def fetchIssuesInformation(repo: String): Future[Seq[JsObject]] = {
     queryRepositoryIssues(repo).get().map { response =>
-
       val pullRequests = response.json.as[JsArray]
 
       log.debug(s"Load PR for repo $repo: ${pullRequests.value.size}")

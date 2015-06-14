@@ -11,7 +11,7 @@ object AWS {
 
   val cloudWatchClient: AmazonCloudWatchScalaClient = {
     val defaultCredentialChain = new DefaultAWSCredentialsProviderChain()
-    Logger.info("[AWS-SES] Connected with account: " + defaultCredentialChain.getCredentials.getAWSAccessKeyId)
+    Logger.info("[AWS-CLW] Connected with account: " + defaultCredentialChain.getCredentials.getAWSAccessKeyId)
 
     val asyncClient = new AmazonCloudWatchAsyncClient(defaultCredentialChain)
     asyncClient.configureRegion(Regions.EU_WEST_1)

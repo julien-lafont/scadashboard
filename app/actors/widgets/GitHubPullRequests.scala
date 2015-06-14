@@ -66,7 +66,6 @@ class GitHubPullRequestsActor(hub: ActorRef, name: String, config: GitHubPRConfi
    */
   private def fetchPRInformation(repo: String): Future[Seq[JsObject]] = {
     queryPullRequests(repo).get().map { response =>
-
       val pullRequests = response.json.as[JsArray]
 
       log.debug(s"Load PR for repo $repo: ${pullRequests.value.size}")

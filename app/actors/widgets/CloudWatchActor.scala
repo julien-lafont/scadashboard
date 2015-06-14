@@ -32,11 +32,11 @@ class CloudWatchActor(hub: ActorRef, name: String, config: CloudWatchConfig) ext
   val since = config.since
 
   val request = new GetMetricStatisticsRequest()
-  .withNamespace(namespace)
-  .withMetricName(metric)
-  .withDimensions(new Dimension().withName("InstanceId").withValue(instanceId))
-  .withPeriod(period)
-  .withStatistics(Statistic.Average)
+    .withNamespace(namespace)
+    .withMetricName(metric)
+    .withDimensions(new Dimension().withName("InstanceId").withValue(instanceId))
+    .withPeriod(period)
+    .withStatistics(Statistic.Average)
 
   override def receive = {
     case Tick =>
