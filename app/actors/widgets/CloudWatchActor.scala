@@ -12,7 +12,7 @@ import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.CloudWatchActor.CloudWatchConfig
-import utils.AWS
+import services.{AWSConfig, AWS}
 
 object CloudWatchActor extends WidgetFactory {
   override type C = CloudWatchConfig
@@ -21,8 +21,11 @@ object CloudWatchActor extends WidgetFactory {
   protected case class CloudWatchConfig(namespace: String, metric: String, instanceId: String, period: Int, since: Int, interval: Option[Long])
 }
 
-class CloudWatchActor(hub: ActorRef, name: String, config: CloudWatchConfig) extends Actor with TickActor with ActorLogging {
+class CloudWatchActor(hub: ActorRef, name: String, config: CloudWatchConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
+
+  // Initialize AWS client
+  val aws = new AWS(AWSConfig(app))
 
   override val interval = config.interval.getOrElse(30l)
   val namespace = config.namespace
@@ -44,7 +47,7 @@ class CloudWatchActor(hub: ActorRef, name: String, config: CloudWatchConfig) ext
         .withStartTime(DateTime.now().minusHours(since).toDate)
         .withEndTime(DateTime.now().toDate)
 
-      AWS.cloudWatchClient.getMetricStatistics(currentRequest).map { result =>
+      aws.cloudWatchClient.getMetricStatistics(currentRequest).map { result =>
         val json = Json.toJson(result.getDatapoints.asScala.map { datapoint =>
           datapoint.getTimestamp.getTime.toString -> BigDecimal(datapoint.getAverage)
         }.toMap)
