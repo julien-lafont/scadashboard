@@ -10,7 +10,8 @@ import actors.HubActor
 import models.Protocol
 
 class DashboardController @Inject() (
-  implicit ec: ExecutionContext, app: Application) extends Controller {
+  implicit val ec: ExecutionContext,
+  implicit val app: Application) extends Controller {
 
   def index = Action { implicit req =>
     Ok(views.html.index())
@@ -19,6 +20,7 @@ class DashboardController @Inject() (
   def ws = WebSocket.acceptWithActor[Protocol.InEvent, Protocol.OutEvent] { request => out =>
     HubActor.props(out)
   }
+
 }
 
 

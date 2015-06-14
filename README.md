@@ -10,10 +10,11 @@ Simple framework for building Business or Developer dashboard.
  * Github issues
  * Github pull-requests
  * Codeship
+ * Amazon SES events (push-notifications from Amazon SNS) **always active**
 
 ## Communication protocol
 
-All comunications are send through a websocket.
+All comunications are send through a web-socket.
 
 ### Start a new widget
 
@@ -39,7 +40,7 @@ Returns a `started` event with the unique widget name generated
 The widgets will regulary send their updates.
 
 ```
-{ "event": "update", "data": { "widget-name": { widget-data } } }
+{ "event": "update", "data": { "<widget-name<": <widget-data> } }
 ```
 ### Stop a widget
 
@@ -69,8 +70,6 @@ The widgets will regulary send their updates.
 
 ## Widgets
 
-TODO
-
 **Ping**
 
 **Weather**
@@ -82,3 +81,5 @@ TODO
 **Github Issues**
 
 **Codeship build status**
+
+**Amazon SES**

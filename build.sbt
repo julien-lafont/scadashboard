@@ -10,6 +10,7 @@ libraryDependencies ++= Seq(
   ws,
   "com.github.dwhjames" %% "aws-wrap" % "0.7.2",
   "com.amazonaws" % "aws-java-sdk-cloudwatch" % "1.9.35",
+  "net.codingwell" %% "scala-guice" % "4.0.0-beta5",
   specs2 % Test
 )
 

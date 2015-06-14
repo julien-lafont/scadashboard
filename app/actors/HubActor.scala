@@ -3,8 +3,10 @@ package actors
 import play.api.Application
 import play.api.libs.json.{Json, JsObject, JsValue}
 
+import actors.widgets.SESActor
 import akka.actor._
 import models.Protocol.{OutEvent, InEvent}
+import models.{SESNotification, SNSEvent}
 
 object HubActor {
   def props(out: ActorRef)(implicit app: Application) = Props(new HubActor(out))
@@ -28,6 +30,11 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
   // Id generator
   val index = new java.util.concurrent.atomic.AtomicLong(1)
 
+  override def preStart(): Unit = {
+    // Launched actors at startup
+    addActor("ses", context.actorOf(SESActor.props(self, "ses", ())))
+  }
+
   override def receive = {
     // Forward a simple message to the user (notification, error...)
     case Forward(event, json) =>
@@ -42,6 +49,9 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
     // Send an error to the client
     case Error(message) =>
       out ! OutEvent("error", Json.obj("message" -> message))
+
+    case SNSEvent(id, topic, message, ts) =>
+      self ! Forward("log", Json.obj("id" -> id))
 
     // Request sent by the client
     case InEvent(action: String, data: JsValue) =>
