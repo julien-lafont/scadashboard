@@ -12,6 +12,7 @@ import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.GitHubIssuesActor.GitHubIssuesConfig
 import akka.actor._
+import services.Github
 
 object GitHubIssuesActor extends WidgetFactory {
   override type C = GitHubIssuesConfig
@@ -25,15 +26,10 @@ class GitHubIssuesActor(hub: ActorRef, id: String, config: GitHubIssuesConfig)(i
 
   override val interval = config.interval.getOrElse(60l)
 
-  val accesstoken = app.configuration.getString("widgets.github.accesstoken").getOrElse(throw app.configuration.globalError("Cannot load Github accesstoken [widgets.github.accesstoken]"))
-  val organization = config.organization
-  val repository = config.repository
+  val github = app.injector.instanceOf(classOf[Github])
 
-  val urlRepositories = s"https://api.github.com/orgs/$organization/repos?access_token=$accesstoken"
-  def urlRepositoryIssues(repo: String) = s"https://api.github.com/repos/$organization/$repo/issues?access_token=$accesstoken"
-
-  val queryRepositories = WS.url(urlRepositories).withRequestTimeout(5000l)
-  def queryRepositoryIssues(repo: String) = WS.url(urlRepositoryIssues(repo)).withRequestTimeout(5000l)
+  val queryRepositories = github.url(s"/orgs/${config.organization}/repos")
+  def queryRepositoryIssues(repo: String) = github.url(s"/repos/${config.organization}/$repo/issues")
 
   override def receive = {
     case Tick =>
@@ -43,7 +39,7 @@ class GitHubIssuesActor(hub: ActorRef, id: String, config: GitHubIssuesConfig)(i
 
         log.debug(s"Repositories found: $repositoryNames")
 
-        repository match {
+        config.repository match {
           // Load PR from just one repository
           case Some(repo) if repositoryNames.contains(repo) =>
             fetchIssuesInformation(repo).foreach { prs =>
@@ -58,7 +54,7 @@ class GitHubIssuesActor(hub: ActorRef, id: String, config: GitHubIssuesConfig)(i
 
           // Repository not found
           case Some(repo) =>
-            hub ! Error(s"Cannot found repository $repo on organization $organization")
+            hub ! Error(s"Cannot found repository $repo on organization ${config.organization}")
         }
       }
   }

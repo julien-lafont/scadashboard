@@ -4,9 +4,11 @@ import play.api.Application
 import play.api.libs.json.{Reads, Json}
 
 import akka.actor.{ActorLogging, Actor, Props, ActorRef}
+
 import actors.HubActor.Update
 import actors.{EventBus, WidgetFactory}
 import models.{SESNotification, SNSEvent}
+
 
 object SESActor  extends WidgetFactory {
   override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new SESActor(hub, id, config))
@@ -20,7 +22,8 @@ object SESActor  extends WidgetFactory {
 class SESActor(hub: ActorRef, id: String, config: Unit)(implicit app: Application) extends Actor with ActorLogging {
 
   override def preStart(): Unit = {
-    EventBus().subscribe(self, classOf[SNSEvent[SESNotification]])
+    val eventBus = app.injector.instanceOf(classOf[EventBus]) // Fixme: Inject by constructor
+    eventBus.subscribe(self, classOf[SNSEvent[SESNotification]])
   }
 
   override def receive = {

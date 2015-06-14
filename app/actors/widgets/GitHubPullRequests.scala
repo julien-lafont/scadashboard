@@ -4,13 +4,13 @@ import scala.concurrent.Future
 
 import play.api.libs.json._
 import play.api.Application
-import play.api.libs.ws.WS
 
+import akka.actor._
 import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.GitHubPullRequestsActor.GitHubPRConfig
-import akka.actor._
+import services.Github
 
 object GitHubPullRequestsActor extends WidgetFactory {
   override type C = GitHubPRConfig
@@ -24,15 +24,10 @@ class GitHubPullRequestsActor(hub: ActorRef, id: String, config: GitHubPRConfig)
 
   override val interval = config.interval.getOrElse(60l)
 
-  val accesstoken = app.configuration.getString("widgets.github.accesstoken").getOrElse(throw app.configuration.globalError("Cannot load Github accesstoken [widgets.github.accesstoken]"))
-  val organization = config.organization
-  val repository = config.repository
+  val github = app.injector.instanceOf(classOf[Github])
 
-  val urlRepositories = s"https://api.github.com/orgs/$organization/repos?access_token=$accesstoken"
-  def urlPullRequests(repo: String) = s"https://api.github.com/repos/$organization/$repo/pulls?access_token=$accesstoken"
-
-  val queryRepositories = WS.url(urlRepositories).withRequestTimeout(5000l)
-  def queryPullRequests(repo: String) = WS.url(urlPullRequests(repo)).withRequestTimeout(5000l)
+  val queryRepositories = github.url(s"/orgs/${config.organization}/repos")
+  def queryPullRequests(repo: String) = github.url(s"/repos/${config.organization}/$repo/pulls")
 
   override def receive = {
     case Tick =>
@@ -41,7 +36,7 @@ class GitHubPullRequestsActor(hub: ActorRef, id: String, config: GitHubPRConfig)
 
         log.debug(s"Repositories found: $repositoryNames")
 
-        repository match {
+        config.repository match {
           // Load PR from just one repository
           case Some(repo) if repositoryNames.contains(repo) =>
             fetchPRInformation(repo).foreach { prs =>
@@ -56,7 +51,7 @@ class GitHubPullRequestsActor(hub: ActorRef, id: String, config: GitHubPRConfig)
 
           // Repository not found
           case Some(repo) =>
-            hub ! Error(s"Cannot found repository $repo on organization $organization")
+            hub ! Error(s"Cannot found repository $repo on organization ${config.organization}")
         }
       }
   }

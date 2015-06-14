@@ -12,7 +12,7 @@ import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.CloudWatchActor.CloudWatchConfig
-import services.{AWSConfig, AWS}
+import services.AWS
 
 object CloudWatchActor extends WidgetFactory {
   override type C = CloudWatchConfig
@@ -24,8 +24,7 @@ object CloudWatchActor extends WidgetFactory {
 class CloudWatchActor(hub: ActorRef, id: String, config: CloudWatchConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
-  // Initialize AWS client
-  val aws = new AWS(AWSConfig(app))
+  val aws = app.injector.instanceOf(classOf[AWS]) // FIXME: Inject in constructor
 
   override val interval = config.interval.getOrElse(30l)
   val namespace = config.namespace

@@ -17,17 +17,6 @@ object EventBus {
    */
   case class ExternalEvent(id: String, payload: JsValue) extends EventMessage
 
-  /**
-   * Holds the global event bus instance.
-   */
-  private lazy val instance = new EventBus
-
-  /**
-   * Gets a global event bus instance.
-   *
-   * @return A global event bus instance.
-   */
-  def apply() = instance
 }
 
 /**
