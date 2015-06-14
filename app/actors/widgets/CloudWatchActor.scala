@@ -2,16 +2,16 @@ package actors.widgets
 
 import scala.collection.JavaConverters._
 
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import play.api.Application
 import play.api.libs.json.Json
 import com.amazonaws.services.cloudwatch.model.{Dimension, GetMetricStatisticsRequest, Statistic}
 import org.joda.time.DateTime
 
-import actors.HubActor.Update
+import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.CloudWatchActor.CloudWatchConfig
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import utils.AWS
 
 object CloudWatchActor extends WidgetFactory {
@@ -19,7 +19,6 @@ object CloudWatchActor extends WidgetFactory {
   override val configReader = Json.reads[CloudWatchConfig]
   override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new CloudWatchActor(hub, name, config))
   protected case class CloudWatchConfig(namespace: String, metric: String, instanceId: String, period: Int, since: Int, interval: Option[Long])
-
 }
 
 class CloudWatchActor(hub: ActorRef, name: String, config: CloudWatchConfig) extends Actor with TickActor with ActorLogging {
@@ -51,7 +50,9 @@ class CloudWatchActor(hub: ActorRef, name: String, config: CloudWatchConfig) ext
         }.toMap)
         hub ! Update(name, json)
       }.recover {
-        case ex => log.error(ex, "Cannot retrieve cloudwatch metrics")
+        case ex =>
+          log.error(ex, "Cannot retrieve cloudwatch metrics")
+          hub ! Error(s"Cannot retrieve cloudwatch metrics $namespace:$metric")
       }
   }
 

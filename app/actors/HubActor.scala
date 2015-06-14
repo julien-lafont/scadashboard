@@ -11,6 +11,7 @@ object HubActor {
 
   case class Forward(event: String, data: JsValue)
   case class Update(name: String, data: JsValue)
+  case class Error(message: String)
 }
 
 /**
@@ -37,6 +38,10 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
     case Update(name, json) =>
       log.debug(s">> $json")
       out ! OutEvent("update", Json.obj(name -> json))
+
+    // Send an error to the client
+    case Error(message) =>
+      out ! OutEvent("error", Json.obj("message" -> message))
 
     // Request sent by the client
     case InEvent(action: String, data: JsValue) =>

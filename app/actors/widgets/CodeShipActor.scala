@@ -7,7 +7,7 @@ import play.api.libs.json._
 import play.api.Application
 import play.api.libs.ws.WS
 
-import actors.HubActor.Update
+import actors.HubActor.{Error, Forward, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.CodeShipActor.CodeShipConfig
@@ -37,8 +37,11 @@ class CodeShipActor(hub: ActorRef, name: String, config: CodeShipConfig)(implici
   override def receive = {
     case Tick =>
       query.get().onComplete {
-        case Success(response) => hub ! Update(name, response.json)
-        case Failure(ex) => log.error(ex, "Cannot retrieve Codeship project status")
+        case Success(response) =>
+          hub ! Update(name, response.json)
+        case Failure(ex) =>
+          log.error(ex, "Cannot retrieve Codeship project status")
+          hub ! Error("Cannot retrieve Codeship project status")
       }
   }
 
