@@ -24,7 +24,7 @@ class PingActor(hub: ActorRef, id: String, config: PingConfig)(implicit app: App
   val url = config.url
   override val interval = config.interval.getOrElse(10l)
 
-  val query = WS.url(url).withRequestTimeout(interval * 1000l).withFollowRedirects(true)
+  val query = WS.url(url).withRequestTimeout(interval * 5000l).withFollowRedirects(true)
 
   override def receive = {
     case Tick =>

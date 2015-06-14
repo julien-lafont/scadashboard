@@ -23,6 +23,7 @@ All comunications are send through a web-socket.
   "action": "start",
   "data": {
     "widget": "Ping",
+    "id": "1:ping",
     "config": {
       "url": "http://www.google.fr",
       "interval": 10
@@ -31,7 +32,9 @@ All comunications are send through a web-socket.
 }
 ```
 
-Returns a `started` event with the unique widget id generated
+The `id` must be unique for all your widgets. You can use `$index:$name` for example.
+
+Returns a `started` event to confirm the creation, or an `error`.
 
 ```json
 { "event": "started", "data": { "id": "1:ping" } }
@@ -75,7 +78,7 @@ The widgets will regulary send their updates.
 Ping an URL, return status and ping.
 
 ```json
-{"action": "start", "data": {"widget": "Ping", "config": {"url": "http://www.google.fr", "interval": 1}}}
+{"action": "start", "data": {"widget": "Ping", "id": "1:ping", "config": {"url": "http://www.google.fr", "interval": 1}}}
 ```
 
 Config : 
@@ -93,7 +96,7 @@ Return the weather for the specified city.
 Documentation: [OpenWeatherMap](http://openweathermap.org/current)
 
 ```json
-{"action": "start", "data": {"widget": "Weather", "config": {"interval": 60, "city": "Montpellier", "country": "fr", "unit": "metric", "language": "fr"}}}
+{"action": "start", "data": {"widget": "Weather", "id": "1:weather", "config": {"interval": 60, "city": "Montpellier", "country": "fr", "unit": "metric", "language": "fr"}}}
 ```
 
 Config:
@@ -131,7 +134,7 @@ Config:
 Return the statistics of a cloudwatch metrics
 
 ```json
-{"action": "start", "data": {"widget": "CloudWatch", "config": {"interval": 1, "namespace": "AWS/EC2", "metric": "NetworkIn", "instanceId": "i-7fc786d5", "period": 60, "since": 1 }}}
+{"action": "start", "data": {"widget": "CloudWatch", "id": "1:cloudwatch", "config": {"interval": 1, "namespace": "AWS/EC2", "metric": "NetworkIn", "instanceId": "i-7fc786d5", "period": 60, "since": 1 }}}
 ```
 
 Config:
@@ -150,7 +153,7 @@ Config:
 Return the pull-requests in the organization, or only in one repository.
 
 ```json
-{"action": "start", "data": {"widget": "GitHubPullRequests", "config": {"organization": "tabmo", "repository": "manager-front", "interval": 60}}}
+{"action": "start", "data": {"widget": "GitHubPullRequests", "id": "1:ghpr", "config": {"organization": "tabmo", "repository": "manager-front", "interval": 60}}}
 ```
 
 Config:
@@ -179,7 +182,7 @@ Config:
 Return the issues in the organization, or only in one repository.
 
 ```json
-{"action": "start", "data": {"widget": "GitHubIssues", "config": {"organization": "tabmo", "repository": "manager-front", "interval": 60}}}
+{"action": "start", "data": {"widget": "GitHubIssues", "id": "1:ghi", "config": {"organization": "tabmo", "repository": "manager-front", "interval": 60}}}
 ```
 Config:
  * Organization (required)
@@ -194,7 +197,7 @@ TODO
 Return the build status of a project.
 
 ```json
-{"action": "start", "data": {"widget": "CodeShip", "config": {"projectId": "76XXX", "branch": "develop", "interval": 60}}}
+{"action": "start", "data": {"widget": "CodeShip", "id": "1:codeship", "config": {"projectId": "76XXX", "branch": "develop", "interval": 60}}}
 ```
 Config:
  * projectId (required)

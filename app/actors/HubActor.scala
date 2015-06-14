@@ -27,7 +27,7 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
   val actors = collection.mutable.Map[String, ActorRef]()
 
   // Id generator
-  val index = new java.util.concurrent.atomic.AtomicLong(1)
+  //val index = new java.util.concurrent.atomic.AtomicLong(1)
 
   override def preStart(): Unit = {
     // Launched actors at startup
@@ -56,21 +56,27 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
       action match {
         case "start" =>
           val widget = (data \ "widget").as[String]
+          val id = (data \ "id").as[String]
           val config = (data \ "config").asOpt[JsObject].getOrElse(Json.obj())
 
-          val nextIndex = index.getAndIncrement()
-          val id = s"$nextIndex:$widget".toLowerCase
+          if (actors.contains(id)) {
+            self ! Error(s"This id ($id) already exists...")
+          } else {
 
-          log.info(s"Starting widget '$id'")
+            //val nextIndex = index.getAndIncrement()
+            //val id = s"$nextIndex:$widget".toLowerCase
 
-          WidgetFactory.initialize(widget)(self, id, config).fold(
-            error => {
-              self ! Forward("error", error)
-              log.warning(s"Cannot initialize new widget $widget: $error")
-            },
-            actor => addActor(id, actor)
-          )
+            log.info(s"Starting widget '$id'")
 
+            WidgetFactory.initialize(widget)(self, id, config).fold(
+              error => {
+                self ! Forward("error", error)
+                log.warning(s"Cannot initialize new widget $widget: $error")
+              },
+              actor => addActor(id, actor)
+            )
+
+          }
         case "stop" =>
           data.asOpt[String].foreach { id =>
             actors.get(id).foreach(actor =>

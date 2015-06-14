@@ -1,45 +1,163 @@
 @()(implicit req: RequestHeader)
 
-@import helper._
+@main {
 
-@main("Welcome to Play") {
-
-    <script type='text/javascript' src='@routes.Assets.versioned("javascripts/index.js")'></script>
-
-    <center>Ouvre ta console !</center>
-    <script language="javascript" type="text/javascript">
-        var wsUri = "ws://localhost:9000/ws";
-        var websocket = new WebSocket("@controllers.routes.DashboardController.ws().webSocketURL()");
-
-        websocket.onopen = onOpen;
-        websocket.onclose = onClose;
-        websocket.onmessage = onMessage;
-        websocket.onerror = onError;
-
-        function onOpen(e) {
-            console.info("Connected");
-            send({action: "start", data: { widget: "ping", config: { url: "http://www.google.fr", interval: 1}}});
-            send({"action": "start", data: {"widget": "codeship", "config": {"apikey": "8393a4e5fa5e7bb0b14d516916993bae10b590e1e933f1e544a85a93602a", "projectId": "76102", "branch": "develop"}}});
-            send({"action": "start", data: {"widget": "cloudwatch", "config": {"interval": 60, "namespace": "AWS/EC2", "metric": "NetworkIn", "instanceId": "i-7fc786d5", "period": 60, "since": 1 }}});
-        }
-
-        function onClose(e) {
-            console.info("Disconnected");
-        }
-
-        function onMessage(e) {
-            console.log("<< " + e.data);
-        }
-
-        function onError(e) {
-            console.error(e);
-        }
-
-        function send(obj) {
-            var json = JSON.stringify(obj);
-            websocket.send(json);
-            console.log(">> " + json);
-        }
+    <script type="text/javascript">
+        var WS_URL = "@controllers.routes.DashboardController.ws().webSocketURL()";
     </script>
+
+    <div class="row">
+
+        <div class="col-sm-2">
+            <div class="chart-wrapper">
+                <div class="chart-title">
+                    Google.fr
+                </div>
+                <div class="chart-stage chart-ping">
+                    <input class="ping" data-interval="1" data-url="http://www.google.fr" type="number" min="0" max="1000" value="0" />
+                </div>
+                <div class="chart-notes">
+                    Notes go down here
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <div class="chart-wrapper">
+                <div class="chart-title">
+                    Google.com
+                </div>
+                <div class="chart-stage chart-ping">
+                    <input class="ping" data-interval="1" data-url="http://www.google.com" type="number" min="0" max="1000" value="0" />
+                </div>
+                <div class="chart-notes">
+                    Notes go down here
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <div class="chart-wrapper">
+                <div class="chart-title">
+                    Free.fr
+                </div>
+                <div class="chart-stage chart-ping">
+                    <input class="ping" data-interval="1" data-url="http://www.free.fr" type="number" min="0" max="1000" value="0" />
+                </div>
+                <div class="chart-notes">
+                    Notes go down here
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <div class="chart-wrapper">
+                <div class="chart-title">
+                    Github.com
+                </div>
+                <div class="chart-stage chart-ping">
+                    <input class="ping" data-interval="1" data-url="http://www.github.com" type="number" min="0" max="1000" value="0" />
+                </div>
+                <div class="chart-notes">
+                    Notes go down here
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <div class="chart-wrapper">
+                <div class="chart-title">
+                    Mocky.io
+                </div>
+                <div class="chart-stage chart-ping">
+                    <input class="ping" data-interval="1" data-url="http://www.mocky.io/v2/557de074621b1a451a5b952c" type="number" min="0" max="1000" value="0" />
+                </div>
+                <div class="chart-notes">
+                    Notes go down here
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <div class="chart-wrapper">
+                <div class="chart-title">
+                    Atlassian.com
+                </div>
+                <div class="chart-stage chart-ping">
+                    <input class="ping" data-interval="1" data-url="http://www.atlassian.com" type="number" min="0" max="1000" value="0" />
+                </div>
+                <div class="chart-notes">
+                    Notes go down here
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="row">
+
+        <div class="col-sm-4">
+            <div class="chart-wrapper">
+                <div class="chart-title">
+                    Impressions by advertiser
+                </div>
+                <div class="chart-stage">
+                    <canvas id="chart-03" style="width: 100%"></canvas>
+                </div>
+                <div class="chart-notes">
+                    Notes go down here
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-4">
+            <div class="chart-wrapper">
+                <div class="chart-title">
+                    Impressions by device
+                </div>
+                <div class="chart-stage">
+                    <div id="chart-04"></div>
+                </div>
+                <div class="chart-notes">
+                    Notes go down here
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-4">
+            <div class="chart-wrapper">
+                <div class="chart-title">
+                    Impressions by country
+                </div>
+                <div class="chart-stage">
+                    <div id="chart-05"></div>
+                </div>
+                <div class="chart-notes">
+                    Notes go down here
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3">
+            <div class="chart-wrapper">
+                <img data-src="holder.js/100%x150/white">
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="chart-wrapper">
+                <img data-src="holder.js/100%x150/white">
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="chart-wrapper">
+                <img data-src="holder.js/100%x150/white">
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="chart-wrapper">
+                <img data-src="holder.js/100%x150/white">
+            </div>
+        </div>
+    </div>
+
 
 }
