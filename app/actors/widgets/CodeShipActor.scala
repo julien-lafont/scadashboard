@@ -15,11 +15,11 @@ import akka.actor._
 object CodeShipActor extends WidgetFactory {
   override type C = CodeShipConfig
   override val configReader = Json.reads[CodeShipConfig]
-  override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new CodeShipActor(hub, name, config))
+  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new CodeShipActor(hub, id, config))
   protected case class CodeShipConfig(projectId: String, branch: Option[String], interval: Option[Long])
 }
 
-class CodeShipActor(hub: ActorRef, name: String, config: CodeShipConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class CodeShipActor(hub: ActorRef, id: String, config: CodeShipConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
   override val interval = config.interval.getOrElse(60l)
@@ -35,7 +35,7 @@ class CodeShipActor(hub: ActorRef, name: String, config: CodeShipConfig)(implici
     case Tick =>
       query.get().onComplete {
         case Success(response) =>
-          hub ! Update(name, response.json)
+          hub ! Update(id, response.json)
         case Failure(ex) =>
           log.error(ex, "Cannot retrieve Codeship project status")
           hub ! Error("Cannot retrieve Codeship project status")

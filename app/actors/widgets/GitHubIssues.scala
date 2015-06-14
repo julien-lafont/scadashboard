@@ -16,11 +16,11 @@ import akka.actor._
 object GitHubIssuesActor extends WidgetFactory {
   override type C = GitHubIssuesConfig
   override val configReader = Json.reads[GitHubIssuesConfig]
-  override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new GitHubIssuesActor(hub, name, config))
+  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new GitHubIssuesActor(hub, id, config))
   protected case class GitHubIssuesConfig(organization: String, repository: Option[String], interval: Option[Long])
 }
 
-class GitHubIssuesActor(hub: ActorRef, name: String, config: GitHubIssuesConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class GitHubIssuesActor(hub: ActorRef, id: String, config: GitHubIssuesConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
   override val interval = config.interval.getOrElse(60l)
@@ -47,13 +47,13 @@ class GitHubIssuesActor(hub: ActorRef, name: String, config: GitHubIssuesConfig)
           // Load PR from just one repository
           case Some(repo) if repositoryNames.contains(repo) =>
             fetchIssuesInformation(repo).foreach { prs =>
-              hub ! Update(name, JsArray(prs))
+              hub ! Update(id, JsArray(prs))
             }
 
           // Load PR from all repositories
           case None =>
             Future.sequence(repositoryNames.map(fetchIssuesInformation)).foreach { prs =>
-              hub ! Update(name, Json.toJson(prs.flatten))
+              hub ! Update(id, Json.toJson(prs.flatten))
             }
 
           // Repository not found

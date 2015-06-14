@@ -20,12 +20,12 @@ object WidgetFactory {
    * Load a widget designed by it's name.
    * The widget is loaded by introspection
    */
-  def initialize(widget: String)(hub: ActorRef, name: String, config: JsValue)(implicit app: Application, context: ActorContext): Either[JsValue, ActorRef] = {
+  def initialize(widget: String)(hub: ActorRef, id: String, config: JsValue)(implicit app: Application, context: ActorContext): Either[JsValue, ActorRef] = {
     val expectedObjectName = s"actors.widgets.${widget.take(1).toUpperCase}${widget.drop(1)}Actor"
     val widgetFactory = getCompanionClass[WidgetFactory](expectedObjectName)
 
     widgetFactory match {
-      case Some(factory) => initialize(factory)(hub, name, config)
+      case Some(factory) => initialize(factory)(hub, id, config)
       case None => Left(Json.obj("message" -> s"cannot found widget $widget (no `$expectedObjectName` object extending `WidgetFactory` found)"))
     }
   }
@@ -44,7 +44,7 @@ trait WidgetFactory {
   type C
 
   // Props for creating a new actor of this type
-  def props(hub: ActorRef, name: String, config: C)(implicit app: Application): Props
+  def props(hub: ActorRef, id: String, config: C)(implicit app: Application): Props
 
   // Read and parse config from JSON
   def configReader: Reads[C]
@@ -53,10 +53,10 @@ trait WidgetFactory {
    * Try to create a new Props for this actor with the config parsed
    * Return Right(props) if the action succeed, elsewhere Left(error)
    */
-  def init(hub: ActorRef, name: String, config: JsValue)(implicit app: Application): Either[JsValue, Props] = {
+  def init(hub: ActorRef, id: String, config: JsValue)(implicit app: Application): Either[JsValue, Props] = {
     configReader.reads(config).fold(
       errors => Left(JsError.toJson(errors)),
-      config => Right(props(hub, name, config))
+      config => Right(props(hub, id, config))
     )
   }
 }

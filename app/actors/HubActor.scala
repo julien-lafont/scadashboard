@@ -5,14 +5,13 @@ import play.api.libs.json.{Json, JsObject, JsValue}
 
 import actors.widgets.SESActor
 import akka.actor._
-import models.Protocol.{OutEvent, InEvent}
-import models.{SESNotification, SNSEvent}
+import models.Protocol._
 
 object HubActor {
   def props(out: ActorRef)(implicit app: Application) = Props(new HubActor(out))
 
   case class Forward(event: String, data: JsValue)
-  case class Update(name: String, data: JsValue)
+  case class Update(id: String, data: JsValue)
   case class Error(message: String)
 }
 
@@ -42,16 +41,13 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
       out ! OutEvent(event, json)
 
     // Send a metric update to the client
-    case Update(name, json) =>
+    case Update(id, json) =>
       log.debug(s">> $json")
-      out ! OutEvent("update", Json.obj(name -> json))
+      out ! OutEvent("update", Json.obj(id -> json))
 
     // Send an error to the client
     case Error(message) =>
       out ! OutEvent("error", Json.obj("message" -> message))
-
-    case SNSEvent(id, topic, message, ts) =>
-      self ! Forward("log", Json.obj("id" -> id))
 
     // Request sent by the client
     case InEvent(action: String, data: JsValue) =>
@@ -62,28 +58,28 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
           val widget = (data \ "widget").as[String]
           val config = (data \ "config").asOpt[JsObject].getOrElse(Json.obj())
 
-          val id = index.getAndIncrement()
-          val name = s"$widget:$id"
+          val nextIndex = index.getAndIncrement()
+          val id = s"$nextIndex:$widget".toLowerCase
 
-          log.info(s"Starting widget '$name'")
+          log.info(s"Starting widget '$id'")
 
-          WidgetFactory.initialize(widget)(self, name, config).fold(
+          WidgetFactory.initialize(widget)(self, id, config).fold(
             error => {
               self ! Forward("error", error)
               log.warning(s"Cannot initialize new widget $widget: $error")
             },
-            actor => addActor(name, actor)
+            actor => addActor(id, actor)
           )
 
         case "stop" =>
-          data.asOpt[String].foreach { name =>
-            actors.get(name).foreach(actor =>
-              stopActor(name, actor))
+          data.asOpt[String].foreach { id =>
+            actors.get(id).foreach(actor =>
+              stopActor(id, actor))
           }
 
         case "stop-all" =>
-          actors.foreach { case (name, actor) =>
-            stopActor(name, actor)
+          actors.foreach { case (id, actor) =>
+            stopActor(id, actor)
           }
 
         case "status" =>
@@ -94,15 +90,15 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
       }
   }
 
-  private def stopActor(name: String, actor: ActorRef) = {
+  private def stopActor(id: String, actor: ActorRef) = {
     actor ! PoisonPill
-    actors.remove(name)
-    self ! Forward("stopped", Json.obj("name" -> name))
+    actors.remove(id)
+    self ! Forward("stopped", Json.obj("id" -> id))
   }
 
-  private def addActor(name: String, actor: ActorRef) = {
-    actors.put(name, actor)
-    self ! Forward("started", Json.obj("name" -> name))
+  private def addActor(id: String, actor: ActorRef) = {
+    actors.put(id, actor)
+    self ! Forward("started", Json.obj("id" -> id))
   }
 
 }

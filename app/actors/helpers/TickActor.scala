@@ -14,7 +14,7 @@ trait TickActor extends Actor {
   // Event sent to `self` on each interval
   protected case object Tick
 
-  // Save the tisk cancellable task to stop the scheduller when the actor stops
+  // Save the tisk cancellable task to stop the scheduler when the actor stops
   protected var tickTask: Cancellable = _
 
   // Start the scheduller when the actor is ready

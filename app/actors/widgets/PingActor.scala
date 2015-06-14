@@ -14,11 +14,11 @@ import actors.widgets.PingActor.PingConfig
 object PingActor  extends WidgetFactory {
   override type C = PingConfig
   override val configReader = Json.reads[PingConfig]
-  override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new PingActor(hub, name, config))
+  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new PingActor(hub, id, config))
   protected case class PingConfig(url: String, interval: Option[Long])
 }
 
-class PingActor(hub: ActorRef, name: String, config: PingConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class PingActor(hub: ActorRef, id: String, config: PingConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
   val url = config.url
@@ -32,7 +32,7 @@ class PingActor(hub: ActorRef, name: String, config: PingConfig)(implicit app: A
       query.get().onComplete { response =>
         val ping = System.currentTimeMillis() - start
         val success = response.map(r => r.status >= 200 && r.status < 300).getOrElse(false)
-        hub ! Update(name, Json.obj(
+        hub ! Update(id, Json.obj(
           "url" -> url,
           "success" -> success,
           "ping" -> ping))

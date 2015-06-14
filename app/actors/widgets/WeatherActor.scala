@@ -16,11 +16,11 @@ import actors.helpers.TickActor
 object WeatherActor extends WidgetFactory {
   override type C = WeatherConfig
   override val configReader = Json.reads[WeatherConfig]
-  override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new WeatherActor(hub, name, config))
+  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new WeatherActor(hub, id, config))
   protected case class WeatherConfig(city: String, country: Option[String], unit: Option[String], language: Option[String], interval: Option[Long])
 }
 
-class WeatherActor(hub: ActorRef, name: String, config: WeatherConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class WeatherActor(hub: ActorRef, id: String, config: WeatherConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
   override val interval = config.interval.getOrElse(10l)
@@ -39,7 +39,7 @@ class WeatherActor(hub: ActorRef, name: String, config: WeatherConfig)(implicit 
         case Success(response) =>
           val httpCode = (response.json \ "cod").asOpt[Int].orElse((response.json \ "cod").asOpt[String].map(_.toInt)).getOrElse(500)
           httpCode match {
-            case 200 => hub ! Update(name, response.json)
+            case 200 => hub ! Update(id, response.json)
             case 404 => hub ! Error(s"Cannot find weather data for city $city:$country")
           }
         case Failure(ex) =>

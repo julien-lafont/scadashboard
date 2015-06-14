@@ -9,7 +9,7 @@ import actors.{EventBus, WidgetFactory}
 import models.{SESNotification, SNSEvent}
 
 object SESActor  extends WidgetFactory {
-  override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new SESActor(hub, name, config))
+  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new SESActor(hub, id, config))
   override type C = Unit
   override val configReader = Reads.pure(())
 }
@@ -17,7 +17,7 @@ object SESActor  extends WidgetFactory {
 /**
  * SimpleEmailService actor receive push notifications send throug Amazon SNS
  */
-class SESActor(hub: ActorRef, name: String, config: Unit)(implicit app: Application) extends Actor with ActorLogging {
+class SESActor(hub: ActorRef, id: String, config: Unit)(implicit app: Application) extends Actor with ActorLogging {
 
   override def preStart(): Unit = {
     EventBus().subscribe(self, classOf[SNSEvent[SESNotification]])
@@ -25,7 +25,7 @@ class SESActor(hub: ActorRef, name: String, config: Unit)(implicit app: Applicat
 
   override def receive = {
     case SNSEvent(messageId, topicArn, message: SESNotification, timestamp) =>
-      hub ! Update(name, Json.obj(
+      hub ! Update(id, Json.obj(
         "source" -> message.source,
         "destination" -> message.destinations.head,
         "timestamp" -> timestamp,

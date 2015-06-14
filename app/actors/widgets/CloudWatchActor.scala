@@ -17,11 +17,11 @@ import services.{AWSConfig, AWS}
 object CloudWatchActor extends WidgetFactory {
   override type C = CloudWatchConfig
   override val configReader = Json.reads[CloudWatchConfig]
-  override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new CloudWatchActor(hub, name, config))
+  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new CloudWatchActor(hub, id, config))
   protected case class CloudWatchConfig(namespace: String, metric: String, instanceId: String, period: Int, since: Int, interval: Option[Long])
 }
 
-class CloudWatchActor(hub: ActorRef, name: String, config: CloudWatchConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class CloudWatchActor(hub: ActorRef, id: String, config: CloudWatchConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
   // Initialize AWS client
@@ -51,7 +51,7 @@ class CloudWatchActor(hub: ActorRef, name: String, config: CloudWatchConfig)(imp
         val json = Json.toJson(result.getDatapoints.asScala.map { datapoint =>
           datapoint.getTimestamp.getTime.toString -> BigDecimal(datapoint.getAverage)
         }.toMap)
-        hub ! Update(name, json)
+        hub ! Update(id, json)
       }.recover {
         case ex =>
           log.error(ex, "Cannot retrieve cloudwatch metrics")

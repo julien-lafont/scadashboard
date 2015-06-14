@@ -15,11 +15,11 @@ import akka.actor._
 object GitHubPullRequestsActor extends WidgetFactory {
   override type C = GitHubPRConfig
   override val configReader = Json.reads[GitHubPRConfig]
-  override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new GitHubPullRequestsActor(hub, name, config))
+  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new GitHubPullRequestsActor(hub, id, config))
   protected case class GitHubPRConfig(organization: String, repository: Option[String], interval: Option[Long])
 }
 
-class GitHubPullRequestsActor(hub: ActorRef, name: String, config: GitHubPRConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class GitHubPullRequestsActor(hub: ActorRef, id: String, config: GitHubPRConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
   override val interval = config.interval.getOrElse(60l)
@@ -45,13 +45,13 @@ class GitHubPullRequestsActor(hub: ActorRef, name: String, config: GitHubPRConfi
           // Load PR from just one repository
           case Some(repo) if repositoryNames.contains(repo) =>
             fetchPRInformation(repo).foreach { prs =>
-              hub ! Update(name, JsArray(prs))
+              hub ! Update(id, JsArray(prs))
             }
 
           // Load PR from all repositories
           case None =>
             Future.sequence(repositoryNames.map(fetchPRInformation)).foreach { prs =>
-              hub ! Update(name, Json.toJson(prs.flatten))
+              hub ! Update(id, Json.toJson(prs.flatten))
             }
 
           // Repository not found
