@@ -16,7 +16,7 @@ import akka.actor._
 object CodeShipActor extends WidgetFactory {
   override type C = CodeShipConfig
   override val configReader = Json.reads[CodeShipConfig]
-  override def props(hub: ActorRef, name: String, config: CodeShipActor.C)(implicit app: Application) = Props(new CodeShipActor(hub, name, config))
+  override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new CodeShipActor(hub, name, config))
   protected case class CodeShipConfig(projectId: String, branch: Option[String], interval: Option[Long])
 }
 

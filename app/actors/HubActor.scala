@@ -3,7 +3,6 @@ package actors
 import play.api.Application
 import play.api.libs.json.{Json, JsObject, JsValue}
 
-import actors.widgets._
 import akka.actor._
 import models.Protocol.{OutEvent, InEvent}
 
@@ -12,9 +11,12 @@ object HubActor {
 
   case class Forward(event: String, data: JsValue)
   case class Update(name: String, data: JsValue)
-  case object Stop
 }
 
+/**
+ * The Hub is the actor connected to the user thought the WebSocket.
+ * Each widget sends it's data to the hub, who transmits to the user
+ */
 class HubActor(out: ActorRef)(implicit app: Application) extends Actor with ActorLogging {
   import HubActor._
   implicit val actorContext = context
@@ -50,7 +52,7 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
 
           log.info(s"Starting widget '$name'")
 
-          WidgetFactory.initialize(widget, self, name, config).fold(
+          WidgetFactory.initialize(widget)(self, name, config).fold(
             error => {
               self ! Forward("error", error)
               log.warning(s"Cannot initialize new widget $widget: $error")

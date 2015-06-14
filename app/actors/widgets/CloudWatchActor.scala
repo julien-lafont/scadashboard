@@ -1,44 +1,43 @@
 package actors.widgets
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
 
-import play.api.libs.json.{JsValue, Json}
+import play.api.Application
+import play.api.libs.json.Json
 import com.amazonaws.services.cloudwatch.model.{Dimension, GetMetricStatisticsRequest, Statistic}
 import org.joda.time.DateTime
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 
 import actors.HubActor.Update
+import actors.WidgetFactory
+import actors.helpers.TickActor
+import actors.widgets.CloudWatchActor.CloudWatchConfig
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import utils.AWS
 
-object CloudWatchActor {
-  def props(hub: ActorRef, name: String, config: JsValue) = Props(new CloudWatchActor(hub, name, config))
-  private case object Tick
+object CloudWatchActor extends WidgetFactory {
+  override type C = CloudWatchConfig
+  override val configReader = Json.reads[CloudWatchConfig]
+  override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new CloudWatchActor(hub, name, config))
+  protected case class CloudWatchConfig(namespace: String, metric: String, instanceId: String, period: Int, since: Int, interval: Option[Long])
+
 }
 
-class CloudWatchActor(hub: ActorRef, name: String, config: JsValue) extends Actor with ActorLogging {
-  import CloudWatchActor._
+class CloudWatchActor(hub: ActorRef, name: String, config: CloudWatchConfig) extends Actor with TickActor with ActorLogging {
+  import context.dispatcher
 
-  val interval = (config \ "interval").asOpt[Long].getOrElse(30l)
-  val namespace = (config \ "namespace").as[String]
-  val metric = (config \ "metric").as[String]
-  val instanceId = (config \ "instanceId").as[String]
-  val period = (config \ "period").as[Int]
-  val since = (config \ "since").as[Int] // hours
+  override val interval = config.interval.getOrElse(30l)
+  val namespace = config.namespace
+  val metric = config.metric
+  val instanceId = config.instanceId
+  val period = config.period
+  val since = config.since
 
   val request = new GetMetricStatisticsRequest()
-    .withNamespace(namespace)
-    .withMetricName(metric)
-    .withDimensions(new Dimension().withName("InstanceId").withValue(instanceId))
-    .withPeriod(period)
-    .withStatistics(Statistic.Average)
-
-  import context.dispatcher
-  val tickTask = context.system.scheduler.schedule(0.seconds, interval.seconds, self, Tick)
-
-  override def postStop(): Unit = {
-    tickTask.cancel()
-  }
+  .withNamespace(namespace)
+  .withMetricName(metric)
+  .withDimensions(new Dimension().withName("InstanceId").withValue(instanceId))
+  .withPeriod(period)
+  .withStatistics(Statistic.Average)
 
   override def receive = {
     case Tick =>

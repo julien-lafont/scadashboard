@@ -1,33 +1,30 @@
 package actors.widgets
 
-import scala.concurrent.duration._
-
 import play.api.Application
-import play.api.libs.json.{Json, JsValue}
+import play.api.libs.json.Json
 import play.api.libs.ws.WS
 
-import akka.actor.{ActorLogging, Actor, Props, ActorRef}
-import actors.HubActor.Update
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 
-object PingActor {
-  def props(hub: ActorRef, name: String, config: JsValue)(implicit app: Application) = Props(new PingActor(hub, name, config))
-  private case object Tick
+import actors.HubActor.Update
+import actors.WidgetFactory
+import actors.helpers.TickActor
+import actors.widgets.PingActor.PingConfig
+
+object PingActor  extends WidgetFactory {
+  override type C = PingConfig
+  override val configReader = Json.reads[PingConfig]
+  override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new PingActor(hub, name, config))
+  protected case class PingConfig(url: String, inverval: Option[Long])
 }
 
-class PingActor(hub: ActorRef, name: String, config: JsValue)(implicit app: Application) extends Actor with ActorLogging {
-  import PingActor._
+class PingActor(hub: ActorRef, name: String, config: PingConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+  import context.dispatcher
 
-  val url = (config \ "url").as[String]
-  val interval = (config \ "interval").asOpt[Long].getOrElse(10l)
+  val url = config.url
+  override val interval = config.inverval.getOrElse(10l)
 
   val query = WS.url(url).withRequestTimeout(interval * 1000l).withFollowRedirects(true)
-
-  import context.dispatcher
-  val tickTask = context.system.scheduler.schedule(0.seconds, interval.seconds, self, Tick)
-
-  override def postStop(): Unit = {
-    tickTask.cancel()
-  }
 
   override def receive = {
     case Tick =>
