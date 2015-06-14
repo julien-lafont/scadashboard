@@ -1,7 +1,6 @@
 package actors.widgets
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
 import play.api.libs.json._
 import play.api.Application
@@ -30,10 +29,10 @@ class GitHubPullRequestsActor(hub: ActorRef, name: String, config: GitHubPRConfi
   val repository = config.repository
 
   val urlRepositories = s"https://api.github.com/orgs/$organization/repos?access_token=$accesstoken"
-  val urlPullRequests = s"https://api.github.com/repos/$organization/{repo}/pulls?access_token=$accesstoken"
+  def urlPullRequests(repo: String) = s"https://api.github.com/repos/$organization/$repo/pulls?access_token=$accesstoken"
 
   val queryRepositories = WS.url(urlRepositories).withRequestTimeout(5000l)
-  def queryPullRequests(repo: String) = WS.url(urlPullRequests.replace("{repo}", repo)).withRequestTimeout(5000l)
+  def queryPullRequests(repo: String) = WS.url(urlPullRequests(repo)).withRequestTimeout(5000l)
 
   override def receive = {
     case Tick =>
