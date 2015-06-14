@@ -1,13 +1,12 @@
 package actors.widgets
 
-import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 import play.api.libs.json._
 import play.api.Application
 import play.api.libs.ws.WS
 
-import actors.HubActor.{Error, Forward, Update}
+import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.CodeShipActor.CodeShipConfig
@@ -31,8 +30,6 @@ class CodeShipActor(hub: ActorRef, name: String, config: CodeShipConfig)(implici
 
   val url = s"https://codeship.com/api/v1/projects/$projectId.json?api_key=$apikey&branch=$branch"
   val query = WS.url(url).withRequestTimeout(5000l)
-
-  log.info(s"Codeship widget launched with $config")
 
   override def receive = {
     case Tick =>
