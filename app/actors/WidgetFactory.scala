@@ -21,12 +21,12 @@ object WidgetFactory {
    * The widget is loaded by introspection
    */
   def initialize(widget: String)(hub: ActorRef, name: String, config: JsValue)(implicit app: Application, context: ActorContext): Either[JsValue, ActorRef] = {
-    val exptectedObjectName = s"actors.widgets.${widget.take(1).toUpperCase}${widget.drop(1)}Actor"
-    val widgetFactory = getCompanionClass[WidgetFactory](exptectedObjectName)
+    val expectedObjectName = s"actors.widgets.${widget.take(1).toUpperCase}${widget.drop(1)}Actor"
+    val widgetFactory = getCompanionClass[WidgetFactory](expectedObjectName)
 
     widgetFactory match {
       case Some(factory) => initialize(factory)(hub, name, config)
-      case None => Left(Json.obj("message" -> s"cannot found widget $widget (no `$exptectedObjectName` object extending `WidgetFactory` found)"))
+      case None => Left(Json.obj("message" -> s"cannot found widget $widget (no `$expectedObjectName` object extending `WidgetFactory` found)"))
     }
   }
 

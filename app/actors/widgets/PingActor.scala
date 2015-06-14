@@ -15,14 +15,14 @@ object PingActor  extends WidgetFactory {
   override type C = PingConfig
   override val configReader = Json.reads[PingConfig]
   override def props(hub: ActorRef, name: String, config: C)(implicit app: Application) = Props(new PingActor(hub, name, config))
-  protected case class PingConfig(url: String, inverval: Option[Long])
+  protected case class PingConfig(url: String, interval: Option[Long])
 }
 
 class PingActor(hub: ActorRef, name: String, config: PingConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
   val url = config.url
-  override val interval = config.inverval.getOrElse(10l)
+  override val interval = config.interval.getOrElse(10l)
 
   val query = WS.url(url).withRequestTimeout(interval * 1000l).withFollowRedirects(true)
 
@@ -32,7 +32,10 @@ class PingActor(hub: ActorRef, name: String, config: PingConfig)(implicit app: A
       query.get().onComplete { response =>
         val ping = System.currentTimeMillis() - start
         val success = response.map(r => r.status >= 200 && r.status < 300).getOrElse(false)
-        hub ! Update(name, Json.obj("url" -> url, "success" -> success, "ping" -> ping))
+        hub ! Update(name, Json.obj(
+          "url" -> url,
+          "success" -> success,
+          "ping" -> ping))
       }
   }
 }

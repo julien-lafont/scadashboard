@@ -24,7 +24,7 @@ class GitHubPullRequestsActor(hub: ActorRef, name: String, config: GitHubPRConfi
 
   override val interval = config.interval.getOrElse(60l)
 
-  val accesstoken = app.configuration.getString("widgets.github.accesstoken").getOrElse(throw new RuntimeException("Cannot load widgets.github.accesstoken"))
+  val accesstoken = app.configuration.getString("widgets.github.accesstoken").getOrElse(throw app.configuration.globalError("Cannot load Github accesstoken [widgets.github.accesstoken]"))
   val organization = config.organization
   val repository = config.repository
 

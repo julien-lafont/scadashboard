@@ -24,7 +24,7 @@ class CodeShipActor(hub: ActorRef, name: String, config: CodeShipConfig)(implici
 
   override val interval = config.interval.getOrElse(60l)
 
-  val apikey = app.configuration.getString("widgets.codeship.apikey").getOrElse(throw new RuntimeException("Cannot load widgets.codeship.apikey"))
+  val apikey = app.configuration.getString("widgets.codeship.apikey").getOrElse(throw app.configuration.globalError("Cannot load Codeship apikey [widgets.codeship.apikey]"))
   val projectId = config.projectId
   val branch = config.branch.getOrElse("master")
 
