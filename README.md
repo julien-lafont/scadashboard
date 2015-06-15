@@ -78,12 +78,13 @@ The widgets will regulary send their updates.
 Ping an URL, return status and ping.
 
 ```json
-{"action": "start", "data": {"widget": "Ping", "id": "1:ping", "config": {"url": "http://www.google.fr", "interval": 1}}}
+{"action": "start", "data": {"widget": "Ping", "id": "1:ping", "config": {"url": "http://www.google.fr", "fetchContent": true, "interval": 1}}}
 ```
 
 Config : 
  * url (required)
  * interval (required) in seconds
+ * fetchContent (optional, default=true) Do a GET or just a HEAD?
 
 ```
 {"event":"update","data":{"1:ping":{"url":"http://www.google.fr","success":true,"ping":98}}}
