@@ -71,7 +71,7 @@ class GitHubIssuesActor(hub: ActorRef, id: String, config: GitHubIssuesConfig)(i
       pullRequests.value.flatMap { json =>
         val isAPullRequest = (json \ "pull_request").asOpt[JsObject].isDefined
 
-        // Pull-Requests are also seens as an issue by Github. Ignore these one
+        // Pull-Requests are also seen as an issue by Github. Ignore these one
         if (isAPullRequest) None
         else {
           val title = (json \ "title").as[String]
