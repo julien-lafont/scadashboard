@@ -11,6 +11,7 @@ Simple framework for building Business or Developer dashboard.
  * Github issues
  * Github pull-requests
  * Codeship
+ * Twitter User (including last tweet)
  * Amazon SES events (push-notifications from Amazon SNS) **always active**
 
 ## Communication protocol
@@ -287,6 +288,153 @@ Config:
           "finished_at":"2015-06-12T08:27:35.449Z"
         }
       ]
+    }
+  }
+}
+```
+
+**Twitter User**
+
+Returns a variety of information about the user specified by the required screenName parameter. 
+
+The author’s most recent Tweet will be returned inline when possible.
+
+```json
+{"action": "start", "data": {"widget": "TwitterUser", "id": "1:twitter", "config": {"interval": 5, "screenName": "julien_lafont"}}}
+```
+
+Config:
+ * screenName (required): Twitter username
+ * interval (optional): Don't forget twitter limitation. At most 180 calls / 15mn
+ 
+```json
+{
+  "event":"update",
+  "data":{
+    "1:twitter":{
+      "id":62913073,
+      "id_str":"62913073",
+      "name":"Julien Lafont ツ",
+      "screen_name":"julien_lafont",
+      "location":"Montpellier, France",
+      "profile_location":null,
+      "description":"Alchimiste du Web \r\n#Scala #Play2 #Akka #Javascript #WOA #Cloud #Agilist #Craftsman #G33k.\r\nDrogué aux séries TV et aux monades.",
+      "url":"http://t.co/pqXQRcK7gO",
+      "entities":{
+        "url":{
+          "urls":[
+            {
+              "url":"http://t.co/pqXQRcK7gO",
+              "expanded_url":"http://www.studio-dev.fr",
+              "display_url":"studio-dev.fr",
+              "indices":[
+                0,
+                22
+              ]
+            }
+          ]
+        },
+        "description":{
+          "urls":[
+
+          ]
+        }
+      },
+      "protected":false,
+      "followers_count":626,
+      "friends_count":492,
+      "listed_count":84,
+      "created_at":"Tue Aug 04 20:04:30 +0000 2009",
+      "favourites_count":2447,
+      "utc_offset":7200,
+      "time_zone":"Paris",
+      "geo_enabled":false,
+      "verified":false,
+      "statuses_count":11279,
+      "lang":"fr",
+      "status":{
+        "created_at":"Mon Jun 15 16:51:51 +0000 2015",
+        "id":610489910026444800,
+        "id_str":"610489910026444800",
+        "text":"Blablabla",
+        "source":"<a href=\"http://twitter.com\" rel=\"nofollow\">Twitter Web Client</a>",
+        "truncated":false,
+        "in_reply_to_status_id":610488084573106176,
+        "in_reply_to_status_id_str":"610488084573106176",
+        "in_reply_to_user_id":40318534,
+        "in_reply_to_user_id_str":"40318534",
+        "in_reply_to_screen_name":"Dinduks",
+        "geo":null,
+        "coordinates":null,
+        "place":null,
+        "contributors":null,
+        "retweet_count":0,
+        "favorite_count":0,
+        "entities":{
+          "hashtags":[
+
+          ],
+          "symbols":[
+
+          ],
+          "user_mentions":[
+            {
+              "screen_name":"Dinduks",
+              "name":"Samy Dindane",
+              "id":40318534,
+              "id_str":"40318534",
+              "indices":[
+                0,
+                8
+              ]
+            }
+          ],
+          "urls":[
+            {
+              "url":"http://t.co/hU9yaujjhY",
+              "expanded_url":"http://www.amazon.fr/s/field-keywords=NFC",
+              "display_url":"amazon.fr/s/field-keywor…",
+              "indices":[
+                9,
+                31
+              ]
+            },
+            {
+              "url":"http://t.co/Ext8Iehf3h",
+              "expanded_url":"http://www.amazon.fr/dp/B00T45956C/ref=sr_ph?ie=UTF8&qid=1434386952&sr=1&keywords=NFC",
+              "display_url":"amazon.fr/dp/B00T45956C/…",
+              "indices":[
+                59,
+                81
+              ]
+            }
+          ]
+        },
+        "favorited":false,
+        "retweeted":false,
+        "possibly_sensitive":false,
+        "lang":"fr"
+      },
+      "contributors_enabled":false,
+      "is_translator":false,
+      "is_translation_enabled":true,
+      "profile_background_color":"C0DEED",
+      "profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png",
+      "profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png",
+      "profile_background_tile":false,
+      "profile_image_url":"http://pbs.twimg.com/profile_images/1695432648/20111215f_normal.jpg",
+      "profile_image_url_https":"https://pbs.twimg.com/profile_images/1695432648/20111215f_normal.jpg",
+      "profile_banner_url":"https://pbs.twimg.com/profile_banners/62913073/1405422552",
+      "profile_link_color":"0084B4",
+      "profile_sidebar_border_color":"C0DEED",
+      "profile_sidebar_fill_color":"DDEEF6",
+      "profile_text_color":"333333",
+      "profile_use_background_image":true,
+      "default_profile":true,
+      "default_profile_image":false,
+      "following":null,
+      "follow_request_sent":null,
+      "notifications":null
     }
   }
 }

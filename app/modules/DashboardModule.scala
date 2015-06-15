@@ -7,7 +7,7 @@ import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 
 import actors.EventBus
-import models.configs.{CodeshipConfig, GithubConfig, AWSConfig}
+import models.configs.{TwitterConfig, CodeshipConfig, GithubConfig, AWSConfig}
 
 class DashboardModule extends ScalaModule with AkkaGuiceSupport {
 
@@ -32,4 +32,8 @@ class DashboardModule extends ScalaModule with AkkaGuiceSupport {
   @Provides
   @Singleton
   def providesCodeshipConfig(config: Config): CodeshipConfig = CodeshipConfig(config)
+
+  @Provides
+  @Singleton
+  def providesTwitterConfig(config: Config): TwitterConfig = TwitterConfig(config)
 }
