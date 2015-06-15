@@ -48,7 +48,7 @@ class CloudWatchActor(hub: ActorRef, id: String, config: CloudWatchConfig)(impli
 
       aws.cloudWatchClient.getMetricStatistics(currentRequest).map { result =>
         val json = Json.toJson(result.getDatapoints.asScala.map { datapoint =>
-          datapoint.getTimestamp.getTime.toString -> BigDecimal(datapoint.getAverage)
+          (datapoint.getTimestamp.getTime / 1000).toString -> BigDecimal(datapoint.getAverage)
         }.toMap)
         hub ! Update(id, json)
       }.recover {
