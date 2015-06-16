@@ -10,6 +10,7 @@ Simple framework for building Business or Developer dashboard.
  * [Weather](#weather)
  * [Github issues](github-issues)
  * [Github pull-requests](#github-pull-requests)
+ * [Github repository](#github-repository)
  * [Codeship](#codeship-build-status)
  * [Twitter User](#twitter-user) (including last tweet)
  * [Twitter Search tweets](#twitter-search-tweets)
@@ -228,8 +229,8 @@ Return the pull-requests in the organization, or only in one repository.
 ```
 
 Config:
- * Organization (required)
- * Repository (optional)
+ * organization (required)
+ * repository (optional)
  * interval (required): Duration in seconds between to refresh
 
 ```json
@@ -258,13 +259,26 @@ Return the issues in the organization, or only in one repository.
 ```
 
 Config:
- * Organization (required)
- * Repository (optional)
+ * organization (required)
+ * repository (optional)
  * interval (required): Duration in seconds between to refresh
 
 ```json
 TODO
 ```
+
+### Github repository
+
+```json
+{"action": "start", "data": {"widget": "GitHubrepository", "id": "1:ghr", "config": {"owner": "studiodev", "repository": "scadashboard", "interval": 60}}}
+```
+
+Config:
+ * owner (required)
+ * repository (required)
+ * interval (required): Duration in seconds between to refresh
+
+Response: See [organization](https://developer.github.com/v3/repos/#response-4) object on Github API documentation.
 
 ### Codeship build status
 
