@@ -5,25 +5,23 @@ import scala.collection.JavaConverters._
 import play.api.Application
 import play.api.libs.json.Json
 import com.amazonaws.services.cloudwatch.model.DescribeAlarmsRequest
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 
 import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.CloudWatchAlarmsActor.CloudWatchAlarmsConfig
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import services.AWS
+import services.Services
 
 object CloudWatchAlarmsActor extends WidgetFactory {
   override type C = CloudWatchAlarmsConfig
   override val configReader = Json.reads[CloudWatchAlarmsConfig]
-  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new CloudWatchAlarmsActor(hub, id, config))
+  override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new CloudWatchAlarmsActor(hub, id, config, services))
   protected case class CloudWatchAlarmsConfig(all: Option[Boolean], alarmNames: Option[Seq[String]], interval: Option[Long])
 }
 
-class CloudWatchAlarmsActor(hub: ActorRef, id: String, config: CloudWatchAlarmsConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class CloudWatchAlarmsActor(hub: ActorRef, id: String, config: CloudWatchAlarmsConfig, services: Services)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
-
-  val aws = app.injector.instanceOf(classOf[AWS]) // FIXME: Inject in constructor
 
   override val interval = config.interval.getOrElse(30l)
   val alarmNames = config.alarmNames
@@ -37,7 +35,7 @@ class CloudWatchAlarmsActor(hub: ActorRef, id: String, config: CloudWatchAlarmsC
 
   override def receive = {
     case Tick =>
-      aws.cloudWatchClient.describeAlarms(request).map { result =>
+      services.aws.cloudWatchClient.describeAlarms(request).map { result =>
         val json = Json.toJson(result.getMetricAlarms.asScala.map { alarm =>
           Json.obj(
             "namespace" -> alarm.getNamespace,

@@ -6,9 +6,10 @@ import play.api.libs.json.{Json, JsObject, JsValue}
 import actors.widgets.SESActor
 import akka.actor._
 import models.Protocol._
+import services.Services
 
 object HubActor {
-  def props(out: ActorRef)(implicit app: Application) = Props(new HubActor(out))
+  def props(out: ActorRef, services: Services)(implicit app: Application) = Props(new HubActor(out, services))
 
   case class Forward(event: String, data: JsValue)
   case class Update(id: String, data: JsValue)
@@ -19,19 +20,16 @@ object HubActor {
  * The Hub is the actor connected to the user thought the WebSocket.
  * Each widget sends it's data to the hub, who transmits to the user
  */
-class HubActor(out: ActorRef)(implicit app: Application) extends Actor with ActorLogging {
+class HubActor(out: ActorRef, services: Services)(implicit app: Application) extends Actor with ActorLogging {
   import HubActor._
   implicit val actorContext = context
 
   // Save active actors for the current user
   val actors = collection.mutable.Map[String, ActorRef]()
 
-  // Id generator
-  //val index = new java.util.concurrent.atomic.AtomicLong(1)
-
   override def preStart(): Unit = {
     // Launched actors at startup
-    addActor("ses", context.actorOf(SESActor.props(self, "ses", ())))
+    addActor("ses", context.actorOf(SESActor.props(self, "ses", (), services)))
   }
 
   override def receive = {
@@ -63,12 +61,9 @@ class HubActor(out: ActorRef)(implicit app: Application) extends Actor with Acto
             self ! Error(s"This id ($id) already exists...")
           } else {
 
-            //val nextIndex = index.getAndIncrement()
-            //val id = s"$nextIndex:$widget".toLowerCase
-
             log.info(s"Starting widget '$id'")
 
-            WidgetFactory.initialize(widget)(self, id, config).fold(
+            WidgetFactory.initialize(widget)(self, id, config, services).fold(
               error => {
                 self ! Forward("error", error)
                 log.warning(s"Cannot initialize new widget $widget: $error")

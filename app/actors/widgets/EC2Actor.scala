@@ -3,27 +3,25 @@ package actors.widgets
 import scala.collection.JavaConverters._
 
 import play.api.Application
-import play.api.libs.json.{JsArray, JsObject, Json}
-import com.amazonaws.services.ec2.model.{Filter, DescribeInstancesRequest}
+import play.api.libs.json.{JsArray, Json}
+import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Filter}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 
 import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.EC2Actor.EC2Config
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import services.AWS
+import services.Services
 
 object EC2Actor extends WidgetFactory {
   override type C = EC2Config
   override val configReader = Json.reads[EC2Config]
-  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new EC2Actor(hub, id, config))
+  override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new EC2Actor(hub, id, config, services))
   protected case class EC2Config(interval: Option[Long])
 }
 
-class EC2Actor(hub: ActorRef, id: String, config: EC2Config)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class EC2Actor(hub: ActorRef, id: String, config: EC2Config, services: Services)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
-
-  val aws = app.injector.instanceOf(classOf[AWS]) // FIXME: Inject in constructor
 
   override val interval = config.interval.getOrElse(30l)
 
@@ -33,7 +31,7 @@ class EC2Actor(hub: ActorRef, id: String, config: EC2Config)(implicit app: Appli
   override def receive = {
     case Tick =>
 
-      aws.ec2Client.describeInstances(request).map { result =>
+      services.aws.ec2Client.describeInstances(request).map { result =>
         val json = JsArray(result.getReservations.asScala.map { reservation =>
           val instance = reservation.getInstances.get(0)
           Json.obj(

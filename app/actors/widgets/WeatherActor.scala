@@ -5,22 +5,22 @@ import scala.util.{Failure, Success}
 import play.api.Application
 import play.api.libs.json.Json
 import play.api.libs.ws.WS
-
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 
-import actors.widgets.WeatherActor.WeatherConfig
 import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
+import actors.widgets.WeatherActor.WeatherConfig
+import services.Services
 
 object WeatherActor extends WidgetFactory {
   override type C = WeatherConfig
   override val configReader = Json.reads[WeatherConfig]
-  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new WeatherActor(hub, id, config))
+  override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new WeatherActor(hub, id, config, services))
   protected case class WeatherConfig(city: String, country: Option[String], unit: Option[String], language: Option[String], interval: Option[Long])
 }
 
-class WeatherActor(hub: ActorRef, id: String, config: WeatherConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class WeatherActor(hub: ActorRef, id: String, config: WeatherConfig, services: Services)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
   override val interval = config.interval.getOrElse(10l)
@@ -37,6 +37,7 @@ class WeatherActor(hub: ActorRef, id: String, config: WeatherConfig)(implicit ap
     case Tick =>
       query.get().onComplete {
         case Success(response) =>
+          // Lol-code
           val httpCode = (response.json \ "cod").asOpt[Int].orElse((response.json \ "cod").asOpt[String].map(_.toInt)).getOrElse(500)
           httpCode match {
             case 200 => hub ! Update(id, response.json)

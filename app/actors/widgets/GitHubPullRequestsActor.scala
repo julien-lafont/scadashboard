@@ -2,32 +2,30 @@ package actors.widgets
 
 import scala.concurrent.Future
 
-import play.api.libs.json._
 import play.api.Application
-
+import play.api.libs.json._
 import akka.actor._
+
 import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.GitHubPullRequestsActor.GitHubPRConfig
-import services.Github
+import services.Services
 
 object GitHubPullRequestsActor extends WidgetFactory {
   override type C = GitHubPRConfig
   override val configReader = Json.reads[GitHubPRConfig]
-  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new GitHubPullRequestsActor(hub, id, config))
+  override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new GitHubPullRequestsActor(hub, id, config, services))
   protected case class GitHubPRConfig(organization: String, repository: Option[String], interval: Option[Long])
 }
 
-class GitHubPullRequestsActor(hub: ActorRef, id: String, config: GitHubPRConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class GitHubPullRequestsActor(hub: ActorRef, id: String, config: GitHubPRConfig, services: Services)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
   override val interval = config.interval.getOrElse(60l)
 
-  val github = app.injector.instanceOf(classOf[Github])
-
-  val queryRepositories = github.url(s"/orgs/${config.organization}/repos")
-  def queryPullRequests(repo: String) = github.url(s"/repos/${config.organization}/$repo/pulls")
+  val queryRepositories = services.github.url(s"/orgs/${config.organization}/repos")
+  def queryPullRequests(repo: String) = services.github.url(s"/repos/${config.organization}/$repo/pulls")
 
   override def receive = {
     case Tick =>

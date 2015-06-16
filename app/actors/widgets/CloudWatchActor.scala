@@ -2,29 +2,27 @@ package actors.widgets
 
 import scala.collection.JavaConverters._
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import play.api.Application
 import play.api.libs.json.Json
 import com.amazonaws.services.cloudwatch.model.{Dimension, GetMetricStatisticsRequest, Statistic}
 import org.joda.time.DateTime
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 
 import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.CloudWatchActor.CloudWatchConfig
-import services.AWS
+import services.Services
 
 object CloudWatchActor extends WidgetFactory {
   override type C = CloudWatchConfig
   override val configReader = Json.reads[CloudWatchConfig]
-  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new CloudWatchActor(hub, id, config))
+  override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new CloudWatchActor(hub, id, config, services: Services))
   protected case class CloudWatchConfig(namespace: String, metric: String, instanceId: String, period: Int, since: Int, interval: Option[Long])
 }
 
-class CloudWatchActor(hub: ActorRef, id: String, config: CloudWatchConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class CloudWatchActor(hub: ActorRef, id: String, config: CloudWatchConfig, services: Services)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
-
-  val aws = app.injector.instanceOf(classOf[AWS]) // FIXME: Inject in constructor
 
   override val interval = config.interval.getOrElse(30l)
   val namespace = config.namespace
@@ -46,7 +44,7 @@ class CloudWatchActor(hub: ActorRef, id: String, config: CloudWatchConfig)(impli
         .withStartTime(DateTime.now().minusHours(since).toDate)
         .withEndTime(DateTime.now().toDate)
 
-      aws.cloudWatchClient.getMetricStatistics(currentRequest).map { result =>
+      services.aws.cloudWatchClient.getMetricStatistics(currentRequest).map { result =>
         val json = Json.toJson(result.getDatapoints.asScala.map { datapoint =>
           (datapoint.getTimestamp.getTime / 1000).toString -> BigDecimal(datapoint.getAverage)
         }.toMap)

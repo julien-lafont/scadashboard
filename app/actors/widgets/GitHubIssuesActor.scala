@@ -1,35 +1,31 @@
 package actors.widgets
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
-import play.api.libs.json._
 import play.api.Application
-import play.api.libs.ws.WS
+import play.api.libs.json._
+import akka.actor._
 
 import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.GitHubIssuesActor.GitHubIssuesConfig
-import akka.actor._
-import services.Github
+import services.Services
 
 object GitHubIssuesActor extends WidgetFactory {
   override type C = GitHubIssuesConfig
   override val configReader = Json.reads[GitHubIssuesConfig]
-  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new GitHubIssuesActor(hub, id, config))
+  override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new GitHubIssuesActor(hub, id, config, services))
   protected case class GitHubIssuesConfig(organization: String, repository: Option[String], interval: Option[Long])
 }
 
-class GitHubIssuesActor(hub: ActorRef, id: String, config: GitHubIssuesConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class GitHubIssuesActor(hub: ActorRef, id: String, config: GitHubIssuesConfig, services: Services)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
   override val interval = config.interval.getOrElse(60l)
 
-  val github = app.injector.instanceOf(classOf[Github])
-
-  val queryRepositories = github.url(s"/orgs/${config.organization}/repos")
-  def queryRepositoryIssues(repo: String) = github.url(s"/repos/${config.organization}/$repo/issues")
+  val queryRepositories = services.github.url(s"/orgs/${config.organization}/repos")
+  def queryRepositoryIssues(repo: String) = services.github.url(s"/repos/${config.organization}/$repo/issues")
 
   override def receive = {
     case Tick =>

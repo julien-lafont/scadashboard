@@ -10,25 +10,23 @@ import actors.HubActor.{Error, Update}
 import actors.WidgetFactory
 import actors.helpers.TickActor
 import actors.widgets.TwitterUserActor.TwitterUserConfig
-import services.Twitter
+import services.Services
 
 object TwitterUserActor  extends WidgetFactory {
   override type C = TwitterUserConfig
   override val configReader = Json.reads[C]
-  override def props(hub: ActorRef, id: String, config: C)(implicit app: Application) = Props(new TwitterUserActor(hub, id, config))
+  override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new TwitterUserActor(hub, id, config, services))
   protected case class TwitterUserConfig(username: String, interval: Option[Long])
 }
 
-class TwitterUserActor(hub: ActorRef, id: String, config: TwitterUserConfig)(implicit app: Application) extends Actor with TickActor with ActorLogging {
+class TwitterUserActor(hub: ActorRef, id: String, config: TwitterUserConfig, services: Services)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
   override val interval = config.interval.getOrElse(60l)
 
-  val twitter = app.injector.instanceOf(classOf[Twitter])
-
   override def receive = {
     case Tick =>
-      twitter
+      services.twitter
         .loadUserInformation(config.username)
         .map {
           case Left(error) => hub ! Error(error)
