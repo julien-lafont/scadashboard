@@ -14,7 +14,7 @@ import services.Services
 
 object GitHubIssuesActor extends WidgetFactory {
   override type C = GitHubIssuesConfig
-  override val configReader = Json.reads[GitHubIssuesConfig]
+  override val configReader = Json.reads[C]
   override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new GitHubIssuesActor(hub, id, config, services))
   protected case class GitHubIssuesConfig(organization: String, repository: Option[String], interval: Option[Long])
 }

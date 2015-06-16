@@ -16,7 +16,7 @@ import services.Services
 
 object CloudWatchActor extends WidgetFactory {
   override type C = CloudWatchConfig
-  override val configReader = Json.reads[CloudWatchConfig]
+  override val configReader = Json.reads[C]
   override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new CloudWatchActor(hub, id, config, services: Services))
   protected case class CloudWatchConfig(namespace: String, metric: String, instanceId: String, period: Int, since: Int, interval: Option[Long])
 }

@@ -14,7 +14,7 @@ import services.Services
 
 object GitHubPullRequestsActor extends WidgetFactory {
   override type C = GitHubPRConfig
-  override val configReader = Json.reads[GitHubPRConfig]
+  override val configReader = Json.reads[C]
   override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new GitHubPullRequestsActor(hub, id, config, services))
   protected case class GitHubPRConfig(organization: String, repository: Option[String], interval: Option[Long])
 }

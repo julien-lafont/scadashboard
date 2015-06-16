@@ -15,7 +15,7 @@ import services.Services
 
 object EC2Actor extends WidgetFactory {
   override type C = EC2Config
-  override val configReader = Json.reads[EC2Config]
+  override val configReader = Json.reads[C]
   override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new EC2Actor(hub, id, config, services))
   protected case class EC2Config(interval: Option[Long])
 }

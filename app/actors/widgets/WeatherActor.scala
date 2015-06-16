@@ -15,7 +15,7 @@ import services.Services
 
 object WeatherActor extends WidgetFactory {
   override type C = WeatherConfig
-  override val configReader = Json.reads[WeatherConfig]
+  override val configReader = Json.reads[C]
   override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new WeatherActor(hub, id, config, services))
   protected case class WeatherConfig(city: String, country: Option[String], unit: Option[String], language: Option[String], interval: Option[Long])
 }

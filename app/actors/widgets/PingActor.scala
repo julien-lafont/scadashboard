@@ -13,7 +13,7 @@ import services.Services
 
 object PingActor extends WidgetFactory {
   override type C = PingConfig
-  override val configReader = Json.reads[PingConfig]
+  override val configReader = Json.reads[C]
   override def props(hub: ActorRef, id: String, config: C, services: Services)(implicit app: Application) = Props(new PingActor(hub, id, config, services))
   protected case class PingConfig(url: String, fetchContent: Option[Boolean], interval: Option[Long])
 }
