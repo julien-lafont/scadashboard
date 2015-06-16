@@ -295,16 +295,16 @@ Config:
 
 **Twitter User**
 
-Returns a variety of information about the user specified by the required screenName parameter. 
+Returns a variety of information about the user specified by the required username parameter. 
 
 The author’s most recent Tweet will be returned inline when possible.
 
 ```json
-{"action": "start", "data": {"widget": "TwitterUser", "id": "1:twitter", "config": {"interval": 5, "screenName": "julien_lafont"}}}
+{"action": "start", "data": {"widget": "TwitterUser", "id": "1:twitter", "config": {"interval": 5, "username": "julien_lafont"}}}
 ```
 
 Config:
- * screenName (required): Twitter username
+ * username (required): Twitter username
  * interval (optional): Don't forget twitter limitation. At most 180 calls / 15mn
  
 ```json
