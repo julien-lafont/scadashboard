@@ -8,12 +8,13 @@ Simple framework for building Business or Developer dashboard.
  * [Amazon CloudWatch metrics](#amazon-cloudwatch-alarms)
  * [Amazon EC2 instances](#amazon-ec2-instances)
  * [Weather](#weather)
- * [Github issues](github-issues)
+ * [Github issues](#github-issues)
  * [Github pull-requests](#github-pull-requests)
  * [Github repository](#github-repository)
  * [Codeship](#codeship-build-status)
  * [Twitter User](#twitter-user) (including last tweet)
  * [Twitter Search tweets](#twitter-search-tweets)
+ * [Generic JSON widget](#generic-json)
  * [Amazon SES events](#amazon-ses) (push-notifications from Amazon SNS) **always active**
 
 You can check the [SampleTickActor](https://github.com/studiodev/scadashboard/blob/master/app/actors/widgets/SampleTickActor.scala) 
@@ -356,6 +357,24 @@ Config:
 Response: See the [User](https://dev.twitter.com/overview/api/users) object on Twitter API documentation.
 
 Twitter limitation: 180 call / 15mn.
+
+### Generic JSON
+
+This widget is a little special... It's perfect if you already have public web-service which return the data your need in JSON.
+Just configure the `url` and the `interval`, and you will receive updates regulary.
+
+```json
+{"action": "start", "data": {"widget": "FetchJson", "id": "1:json", "config": {"interval": 60, "url": "https://api.ipify.org?format=json"}}}
+```
+
+Config:
+ * url (required): URL to call
+ * method (optional, default=GET): Method used to call the `url`
+ * interval (required): Duration in seconds between to refresh
+ 
+You can use this widget to fetch data from public services like **Stackoverflow** :
+ * User information: `https://api.stackexchange.com/2.2/users/742932?site=stackoverflow`
+ * Badges: `https://api.stackexchange.com/2.2/users/742932/badges?order=desc&sort=rank&site=stackoverflow`
 
 ### Amazon SES
 

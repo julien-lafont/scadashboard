@@ -21,11 +21,10 @@ object PingActor extends WidgetFactory {
 class PingActor(hub: ActorRef, id: String, config: PingConfig, services: Services)(implicit app: Application) extends Actor with TickActor with ActorLogging {
   import context.dispatcher
 
-  val url = config.url
   override val interval = config.interval.getOrElse(10l)
 
   val fetchContent = config.fetchContent.getOrElse(true)
-  val query = WS.url(url).withRequestTimeout(interval * 5000l).withFollowRedirects(true)
+  val query = WS.url(config.url).withRequestTimeout(interval * 5000).withFollowRedirects(true)
 
   override def receive = {
     case Tick =>
@@ -36,7 +35,7 @@ class PingActor(hub: ActorRef, id: String, config: PingConfig, services: Service
         val ping = System.currentTimeMillis() - start
         val success = response.map(r => r.status >= 200 && r.status < 300).getOrElse(false)
         hub ! Update(id, Json.obj(
-          "url" -> url,
+          "url" -> config.url,
           "success" -> success,
           "ping" -> ping))
       }

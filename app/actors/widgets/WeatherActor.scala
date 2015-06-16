@@ -31,7 +31,7 @@ class WeatherActor(hub: ActorRef, id: String, config: WeatherConfig, services: S
 
   val url = s"http://api.openweathermap.org/data/2.5/weather?q=$city,$country&units=$unit&lang=$language"
 
-  val query = WS.url(url).withRequestTimeout(interval * 1000l)
+  val query = WS.url(url).withRequestTimeout(interval * 1000)
 
   override def receive = {
     case Tick =>
