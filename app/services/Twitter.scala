@@ -16,9 +16,11 @@ class Twitter @Inject()(
   implicit private val app: Application,
   implicit private val ec: ExecutionContext) {
 
+  private val url = "https://api.twitter.com"
+
   def loadUserInformation(username: String): Future[Either[String, JsValue]] = {
     fetchTokenFromCache().flatMapRight { token =>
-      WS.url(s"https://api.twitter.com/1.1/users/show.json?screen_name=$username")
+      WS.url(s"$url/1.1/users/show.json?screen_name=$username")
         .withHeaders("Authorization" -> s"Bearer $token")
         .get()
         .map { response =>
@@ -26,14 +28,30 @@ class Twitter @Inject()(
             case 200 => Right(response.json)
             case _ =>
               Logger.error(s"Unable to retrieve twitter profile $username with token $token.\nStatus: ${response.status}\nBody: ${response.body}")
-              Left("Unable to retrive twitter profile")
+              Left("Unable to retrieve twitter profile")
           }
       }
     }
   }
 
+  def searchTweets(query: String, resultType: String, count: Int): Future[Either[String, JsValue]] = {
+    fetchTokenFromCache().flatMapRight { token =>
+      WS.url(s"$url/1.1/search/tweets.json?q=$query&result_type=$resultType&count=$count")
+        .withHeaders("Authorization" -> s"Bearer $token")
+        .get()
+        .map { response =>
+          response.status match {
+            case 200 => Right(response.json)
+            case _ =>
+              Logger.error(s"Unable to search tweets with query $query and token $token.\nStatus: ${response.status}\nBody: ${response.body}")
+              Left("Unable to search tweets")
+          }
+        }
+    }
+  }
+
   private def fetchToken(): Future[Either[String, String]] = {
-    WS.url("https://api.twitter.com/oauth2/token")
+    WS.url(s"$url/oauth2/token")
       .withAuth(twitterConfig.consumerKey, twitterConfig.consumerSecret, WSAuthScheme.BASIC)
       .withHeaders("Content-Type" -> "application/x-www-form-urlencoded")
       .post("grant_type=client_credentials")
@@ -42,7 +60,7 @@ class Twitter @Inject()(
           case 200 => Right((response.json \ "access_token").as[String])
           case _ =>
             Logger.error(s"Unable to retrieve twitter access_token from credentials.\nStatus: ${response.status}\nBody: ${response.body}")
-            Left("Unable to retrive twitter access_token")
+            Left("Unable to retrieve twitter access_token")
         }
       }
   }

@@ -85,8 +85,8 @@ Ping an URL, return status and ping.
 
 Config : 
  * url (required)
- * interval (required) in seconds
- * fetchContent (optional, default=true) Do a GET or just a HEAD?
+ * fetchContent (optional, default=true): Do a GET or just a HEAD?
+ * interval (required): Duration in seconds between to refresh
 
 ```
 {"event":"update","data":{"1:ping":{"url":"http://www.google.fr","success":true,"ping":98}}}
@@ -108,7 +108,7 @@ Config:
  * country (optional)
  * unit (optional): imperial, metrics
  * language (optional): fr, en...
- * interval (optional) in seconds
+ * interval (required): Duration in seconds between to refresh
 
 ```json
 {
@@ -141,11 +141,12 @@ Return the statistics of a cloudwatch metrics
 ```
 
 Config:
- * namespace (required) [aws-namespace](http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/aws-namespaces.html)
- * metric (required) [aws-metric](http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/ec2-metricscollected.html)
- * instanceId (requis)
- * period (required) Granularity (in s) of datapoints. Min 60, multiple of 60.
- * since (requis) Fetch the datapoints for the N last hours.
+ * namespace (required): [aws-namespace](http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/aws-namespaces.html)
+ * metric (required): [aws-metric](http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/ec2-metricscollected.html)
+ * instanceId (required): Id of the instance to inspect metric
+ * period (required): Granularity (in s) of datapoints. Min 60, multiple of 60.
+ * since (required): Fetch the datapoints for the N last hours.
+ * interval (required): Duration in seconds between to refresh
 
 ```json
 {"event":"update","data":{"2:cloudwatch":{"1434304320":288318461,"1434302040":288558051,"1434303360":288834271,"1434303540":290506134,"1434304020":287059788,"1434303960":285087595,"1434303900":288596710,"1434300900":288018407,"1434303480":293454792,"1434303420":288138737,"1434303240":289734447,"1434302460":289559817,"1434301680":293763600,"1434302640":289669546,"1434303120":289487857,"1434301440":290510582,"1434303060":292413611,"1434301860":293872165,"1434301020":288144432,"1434302940":290112439,"1434301380":293555723,"1434302580":294265180,"1434301620":287092116,"1434304140":288919045,"1434304200":293733757,"1434302340":290091144,"1434301500":288406488,"1434303840":283264921,"1434302160":288652301,"1434303300":294559430,"1434302220":289853774,"1434300780":288505197,"1434302400":295451706,"1434302700":293270383,"1434302280":295240917,"1434301140":288049709,"1434301200":288458455,"1434301740":291084616,"1434304080":290330646,"1434302100":292291300,"1434303780":299295933,"1434301320":288738105,"1434302760":288186256,"1434303720":291789206,"1434302880":294139651,"1434301080":292955182,"1434300960":292275011,"1434303000":291427933,"1434301800":287729249,"1434301920":287522892,"1434301560":295091110,"1434302820":290415301,"1434302520":288013478,"1434304260":288334542,"1434303600":295374975,"1434300840":292344576,"1434303180":294121771,"1434303660":290316364,"1434301260":293424137,"1434301980":293376282}}}
@@ -160,8 +161,9 @@ Return the predefined alarms
 ```
 
 Config:
- * all (optional, default=false) Return also OK alarms
- * alarmNames (optional) Filter alarms by name
+ * all (optional, default=false): If truee, return also OK alarms
+ * alarmNames (optional): Filter alarms by ts name
+ * interval (required): Duration in seconds between to refresh
  
 ```json
 {
@@ -190,6 +192,9 @@ Return the list of all *running* EC2 instances
 ```json
 {"action": "start", "data": {"widget": "EC2", "id": "1:ec2", "config": {"interval": 60 }}}
 ```
+
+Config:
+ * interval (required): Duration in seconds between to refresh
 
 ```json
 {
@@ -220,6 +225,7 @@ Return the pull-requests in the organization, or only in one repository.
 Config:
  * Organization (required)
  * Repository (optional)
+ * interval (required): Duration in seconds between to refresh
 
 ```json
 {
@@ -245,9 +251,11 @@ Return the issues in the organization, or only in one repository.
 ```json
 {"action": "start", "data": {"widget": "GitHubIssues", "id": "1:ghi", "config": {"organization": "tabmo", "repository": "manager-front", "interval": 60}}}
 ```
+
 Config:
  * Organization (required)
  * Repository (optional)
+ * interval (required): Duration in seconds between to refresh
 
 ```json
 TODO
@@ -264,6 +272,7 @@ Return the build status of a project.
 Config:
  * projectId (required)
  * branch (optional)
+ * interval (required): Duration in seconds between to refresh
 
 ```json
 {
@@ -293,6 +302,24 @@ Config:
 }
 ```
 
+**Twitter Search tweets**
+
+Returns a collection of relevant Tweets matching a specified query.
+
+```json
+{"action": "start", "data": {"widget": "TwitterSearch", "id": "1:twitter", "config": {"query": "#hashtag", "resultType": "recent", "count": 1, "interval": 5}}}
+```
+
+Config:
+ * query (required): search query (ex: `#hashtag`, `@account`, `keyword #hashtag lang:fr from:julien_lafont` )
+ * resultType (optional, default=recent): Specifies what type of search results you would prefer to receive: `recent`, `popular`, `mixed`.
+ * count (optional, default=5): Number of tweets to return (max: 100)
+ * interval (required): Duration in seconds between to refresh
+  
+Response: See the [Tweet](https://dev.twitter.com/overview/api/tweets) object on Twitter API documentation.
+
+Twitter limitation: 180 call / 15mn.
+
 **Twitter User**
 
 Returns a variety of information about the user specified by the required username parameter. 
@@ -300,145 +327,16 @@ Returns a variety of information about the user specified by the required userna
 The author’s most recent Tweet will be returned inline when possible.
 
 ```json
-{"action": "start", "data": {"widget": "TwitterUser", "id": "1:twitter", "config": {"interval": 5, "username": "julien_lafont"}}}
+{"action": "start", "data": {"widget": "TwitterUser", "id": "1:twitter", "config": {"interval": 60, "username": "julien_lafont"}}}
 ```
 
 Config:
  * username (required): Twitter username
- * interval (optional): Don't forget twitter limitation. At most 180 calls / 15mn
- 
-```json
-{
-  "event":"update",
-  "data":{
-    "1:twitter":{
-      "id":62913073,
-      "id_str":"62913073",
-      "name":"Julien Lafont ツ",
-      "screen_name":"julien_lafont",
-      "location":"Montpellier, France",
-      "profile_location":null,
-      "description":"Alchimiste du Web \r\n#Scala #Play2 #Akka #Javascript #WOA #Cloud #Agilist #Craftsman #G33k.\r\nDrogué aux séries TV et aux monades.",
-      "url":"http://t.co/pqXQRcK7gO",
-      "entities":{
-        "url":{
-          "urls":[
-            {
-              "url":"http://t.co/pqXQRcK7gO",
-              "expanded_url":"http://www.studio-dev.fr",
-              "display_url":"studio-dev.fr",
-              "indices":[
-                0,
-                22
-              ]
-            }
-          ]
-        },
-        "description":{
-          "urls":[
+ * interval (required): Duration in seconds between to refresh
 
-          ]
-        }
-      },
-      "protected":false,
-      "followers_count":626,
-      "friends_count":492,
-      "listed_count":84,
-      "created_at":"Tue Aug 04 20:04:30 +0000 2009",
-      "favourites_count":2447,
-      "utc_offset":7200,
-      "time_zone":"Paris",
-      "geo_enabled":false,
-      "verified":false,
-      "statuses_count":11279,
-      "lang":"fr",
-      "status":{
-        "created_at":"Mon Jun 15 16:51:51 +0000 2015",
-        "id":610489910026444800,
-        "id_str":"610489910026444800",
-        "text":"Blablabla",
-        "source":"<a href=\"http://twitter.com\" rel=\"nofollow\">Twitter Web Client</a>",
-        "truncated":false,
-        "in_reply_to_status_id":610488084573106176,
-        "in_reply_to_status_id_str":"610488084573106176",
-        "in_reply_to_user_id":40318534,
-        "in_reply_to_user_id_str":"40318534",
-        "in_reply_to_screen_name":"Dinduks",
-        "geo":null,
-        "coordinates":null,
-        "place":null,
-        "contributors":null,
-        "retweet_count":0,
-        "favorite_count":0,
-        "entities":{
-          "hashtags":[
+Response: See the [User](https://dev.twitter.com/overview/api/users) object on Twitter API documentation.
 
-          ],
-          "symbols":[
-
-          ],
-          "user_mentions":[
-            {
-              "screen_name":"Dinduks",
-              "name":"Samy Dindane",
-              "id":40318534,
-              "id_str":"40318534",
-              "indices":[
-                0,
-                8
-              ]
-            }
-          ],
-          "urls":[
-            {
-              "url":"http://t.co/hU9yaujjhY",
-              "expanded_url":"http://www.amazon.fr/s/field-keywords=NFC",
-              "display_url":"amazon.fr/s/field-keywor…",
-              "indices":[
-                9,
-                31
-              ]
-            },
-            {
-              "url":"http://t.co/Ext8Iehf3h",
-              "expanded_url":"http://www.amazon.fr/dp/B00T45956C/ref=sr_ph?ie=UTF8&qid=1434386952&sr=1&keywords=NFC",
-              "display_url":"amazon.fr/dp/B00T45956C/…",
-              "indices":[
-                59,
-                81
-              ]
-            }
-          ]
-        },
-        "favorited":false,
-        "retweeted":false,
-        "possibly_sensitive":false,
-        "lang":"fr"
-      },
-      "contributors_enabled":false,
-      "is_translator":false,
-      "is_translation_enabled":true,
-      "profile_background_color":"C0DEED",
-      "profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png",
-      "profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png",
-      "profile_background_tile":false,
-      "profile_image_url":"http://pbs.twimg.com/profile_images/1695432648/20111215f_normal.jpg",
-      "profile_image_url_https":"https://pbs.twimg.com/profile_images/1695432648/20111215f_normal.jpg",
-      "profile_banner_url":"https://pbs.twimg.com/profile_banners/62913073/1405422552",
-      "profile_link_color":"0084B4",
-      "profile_sidebar_border_color":"C0DEED",
-      "profile_sidebar_fill_color":"DDEEF6",
-      "profile_text_color":"333333",
-      "profile_use_background_image":true,
-      "default_profile":true,
-      "default_profile_image":false,
-      "following":null,
-      "follow_request_sent":null,
-      "notifications":null
-    }
-  }
-}
-```
+Twitter limitation: 180 call / 15mn.
 
 **Amazon SES**
 
