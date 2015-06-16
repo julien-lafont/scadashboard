@@ -4,9 +4,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import javax.inject.Inject
 
 import play.api.cache.Cache
-import play.api.{Application, Logger}
 import play.api.libs.json.JsValue
 import play.api.libs.ws.{WS, WSAuthScheme}
+import play.api.{Application, Logger}
 
 import models.configs.TwitterConfig
 import utils.rich._
@@ -36,7 +36,12 @@ class Twitter @Inject()(
 
   def searchTweets(query: String, resultType: String, count: Int): Future[Either[String, JsValue]] = {
     fetchTokenFromCache().flatMapRight { token =>
-      WS.url(s"$url/1.1/search/tweets.json?q=$query&result_type=$resultType&count=$count")
+      WS.url(s"$url/1.1/search/tweets.json")
+        .withQueryString(
+          "q" -> query,
+          "result_type" -> resultType,
+          "count" -> count.toString
+        )
         .withHeaders("Authorization" -> s"Bearer $token")
         .get()
         .map { response =>

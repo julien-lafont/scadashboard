@@ -8,7 +8,9 @@ import play.api.libs.ws.{WS, WSRequest}
 import models.configs.CodeshipConfig
 
 @Singleton
-class Codeship @Inject() (config: CodeshipConfig, implicit val app: Application) {
+class Codeship @Inject() (
+  config: CodeshipConfig,
+  implicit private val app: Application) {
 
   private val base = "https://codeship.com/api/v1/"
 
