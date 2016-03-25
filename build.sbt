@@ -4,15 +4,17 @@ version := "1.0-SNAPSHOT"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.8"
+
+resolvers += Resolver.bintrayRepo("dwhjames", "maven")
 
 libraryDependencies ++= Seq(
   ws,
   cache,
-  "com.github.dwhjames" %% "aws-wrap" % "0.7.2",
-  "com.amazonaws" % "aws-java-sdk-cloudwatch" % "1.10.0",
-  "com.amazonaws" % "aws-java-sdk-ec2" % "1.10.0",
-  "net.codingwell" %% "scala-guice" % "4.0.0-beta5",
+  "com.github.dwhjames" %% "aws-wrap" % "0.8.0",
+  "com.amazonaws" % "aws-java-sdk-cloudwatch" % "1.10.64",
+  "com.amazonaws" % "aws-java-sdk-ec2" % "1.10.64",
+  "net.codingwell" %% "scala-guice" % "4.0.1",
   specs2 % Test
 )
 
